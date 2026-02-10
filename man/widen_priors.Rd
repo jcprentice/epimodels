@@ -13,5 +13,6 @@ widen_priors(priors)
 A modified data.table of priors
 }
 \description{
-Widen Priors
+Takes the existing set of priors and moves `val1` and `val2` to ensure that
+`true_val` is not at the edge.
 }

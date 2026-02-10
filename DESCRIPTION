@@ -14,6 +14,7 @@ Description: Build Genetic Epidemiological Models, simulate either within R or
 License: MIT
 Encoding: UTF-8
 LazyData: true
+ByteCompile: true
 Depends: R (>= 4.2.0), data.table, purrr, stringr
 Imports: ggplot2, MASS, tictoc, lubridate, Matrix, coda, fitdistrplus, ggthemes,
     ggcorrplot, cowplot, pROC
