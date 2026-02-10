@@ -1,2 +1,2 @@
 # epimodels
-Create and run genetic epidemic models
+Create and run genetic epidemic models using R or BICI
