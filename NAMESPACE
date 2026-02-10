@@ -2,4 +2,5 @@
 
 export(make_matrices)
 export(make_parameters)
+export(summarise_params)
 export(widen_priors)

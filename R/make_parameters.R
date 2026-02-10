@@ -633,6 +633,12 @@ make_parameters <- function(
 
 
 # Handy summary ----
+#' Summarise Parameters
+#'
+#' @param params A list of parameters
+#'
+#' @export
+
 summarise_params <- function(params) {
     with(params, {
         if (sim_new_data == "no") {
@@ -680,6 +686,14 @@ summarise_params <- function(params) {
             r0 = signif(R0, 3),
             .trim = FALSE, .sep = "\n"
         ))
+
+        if (patch_dataset != "") {
+            message(str_glue(
+                "- Patching with dataset {patch_dataset} / {patch_name}",
+                "\ttype = {patch_type}, state = {patch_state}",
+                .trim = FALSE, .sep = "\n"
+            ))
+        }
 
         message(str_glue(
             "- Running MCMC with:",
