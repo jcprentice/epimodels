@@ -5,8 +5,9 @@
 
 ## Load libraries and source files ----
 library(devtools)
-load_all()
-
+suppressPackageStartupMessages(
+    load_all()
+)
 time_start <- now()
 
 # for testing only
@@ -19,7 +20,7 @@ run_from_script <- length(cmd_args) > 0
 
 {
     params <- make_parameters(
-        model_type = "SIDR", # "SIR", "SEIR", "SIDR", or "SEIDR"
+        model_type = "SEIDR", # "SIR", "SEIR", "SIDR", or "SEIDR"
         dataset = "testing",
         name = "scen-1-1",
         setup = "fb_12_rpw", # chris, small, fb_12, fb_1, fb_2, single
@@ -94,7 +95,7 @@ if (params$sim_new_data != "no") {
     params$fix_donors <- "no_Tsym_survivors" # c("time", "no_Tsym_survivors")
 
     # Create a GRM or A matrix
-    GRM <- make_grm(popn, params$use_grm)
+    GRM <- make_grm(popn, "A_inv")
 }
 
 

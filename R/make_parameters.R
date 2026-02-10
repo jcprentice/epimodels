@@ -1,11 +1,3 @@
-# {
-#     library(data.table)
-#     library(stringr)
-#
-#     source("widen_priors.R")
-#     source("utils.R")
-# }
-
 #' Generate a list of parameters
 #'
 #' @param model_type Epidemic model: "SIR", "SIDR", "SEIR", "SEIDR"
