@@ -33,7 +33,7 @@ run_from_script <- length(cmd_args) > 0
         txd_fe = "ildt",
         weight_fe = "sildt",
         weight_is_nested = TRUE,
-        sim_new_data = "r"
+        sim_new_data = "no"
     )
 
     # Temporary override of some parameters
@@ -95,7 +95,7 @@ if (params$sim_new_data != "no") {
     params$fix_donors <- "no_Tsym_survivors" # c("time", "no_Tsym_survivors")
 
     # Create a GRM or A matrix
-    GRM <- make_grm(popn, "A_inv")
+    GRM <- make_grm(popn, "")
 }
 
 
@@ -130,6 +130,7 @@ if (params$sim_new_data == "r") {
 ### Plot the epidemic ----
 
 plt <- plot_model(popn, params)
+plt
 
 
 
