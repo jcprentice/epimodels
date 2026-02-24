@@ -1,39 +1,47 @@
 #' Generate a list of parameters
 #'
+#' @description Generate a complete list of parameters, factoring in arguments
+#'   provided. Values can be modified later if preferred, but be careful about
+#'   maintaining consistency.
+#'
 #' @param model_type Epidemic model: "SIR", "SIDR", "SEIR", "SEIDR"
-#' @param name Filename for data
-#' @param dataset Folder suffix for data (default "")
+#' @param dataset Name for overall dataset (default "testing")
+#' @param name Name of scenario within dataset (default "scen-1-1")
 #' @param scenario Integer for scenario
 #' @param replicate Integer for replicate
 #' @param setup Population layout
 #' @param use_traits Which traits to use (this is going to be "clever") use
-#'   "all" or "none", or a subset using the first letter of each trait
-#'   "sildt" = "sus", "inf", "lat", "det", "tol"
-#' @param vars Variances: diagonal of cov matrix, either
-#'   - a single value, e.g. 1.0
-#'   - a list wrapped vector of compatible length, e.g. list(1, 1.5, 0, 0, 0.5)
-#'   - a list wrapped named vector e.g. list(sus = 1, inf = 1.5, tol = 0.5, default = 0)
+#' * "all" or "none", or a subset using the first letter of each trait
+#' * "sildt" = "sus", "inf", "lat", "det", "tol"
+#' @param vars Variances: diagonal of covariance matrix, either
+#' * a single value, e.g. 1.0
+#' * a list wrapped vector of compatible length, e.g.
+#'     * list(1, 1.5, 0, 0, 0.5)
+#' * a list wrapped named vector e.g.
+#'     * list(sus = 1, inf = 1.5, tol = 0.5, default = 0)
 #' @param cors Correlations for Sigma matrix, either
-#'   - a single numerical value, e.g. 0.2
-#'   - a named list-wrapped vector, e.g. list(si = 0.3, st = -0.1, it = 0.2, default = 0)
-#'   - a named list of compatible with the lower triangle order, e.g.
-#'     list(si, sl, sd, st, il, id, it, ld, lt, dt)
+#' * a single numerical value, e.g. 0.2
+#' * a named list-wrapped vector, e.g.
+#'     * list(si = 0.3, st = -0.1, it = 0.2, default = 0)
+#' * a named list of compatible with the lower triangle order, e.g.
+#'     * list(si, sl, sd, st, il, id, it, ld, lt, dt)
 #' @param group_layout How to arrange individuals into groups: "random",
 #'   "striped", "family", "fishboost"
 #' @param group_effect Include group effect if >= 0, simulate if appropriate and
 #'   check, ignore if < 0
-#' @param trial_fe List of fixed effects to check for Trial
-#'   Should also simulate these if not using FB dataset. A string with the first
-#'   letters of traits, e.g. "lidt"
+#' @param trial_fe List of fixed effects to check for Trial Should also simulate
+#'   these if not using FB dataset. A string with the first letters of traits,
+#'   e.g. "lidt"
 #' @param donor_fe List of fixed effects to check for Donor
 #' @param txd_fe List of fixed effects to check for Trial x Donor interaction
 #' @param weight_fe List of fixed effects to check for Weight
-#' @param weight_is_nested should weight be nested across trials? (default TRUE),
+#' @param weight_is_nested should weight be nested across trials? (default
+#'   TRUE),
 #' @param sim_new_data Simulate new data in "r" or "bici". Alternatively, "no"
 #'   for using FB data, or "etc_sim" or "etc_inf" for getting data from an
 #'   existing dataset (specified in patches)
 #'
-#' @returns a list containing all the parameters
+#' @returns A list containing all the parameters
 #' @export
 
 make_parameters <- function(
@@ -56,6 +64,7 @@ make_parameters <- function(
         weight_fe <- "sildt"; weight_is_nested <- TRUE; sim_new_data <- "bici";
     }
 
+    # For importing from a protocol file
     if (FALSE) {
         model_type <- protocol$model_type; dataset <- protocol$dataset; name <- protocol$name;
         scenario <- protocol$scenario; replicate = protocol$scenario; use_traits <- protocol$use_traits;
@@ -92,21 +101,19 @@ make_parameters <- function(
 
     # Set output directories ----
 
-    # Directories should be something like "dataset/data", "dataset/results", or
-    # "testing" if just testing (and convert to basic string)
+    # Directories should be something like "dataset/data", "dataset/results"
     if (dataset == "") {
         dataset <- "testing"
     }
 
     {
-        base_dir    <- c(str_glue("datasets/{dataset}"))
-        gfx_dir     <- c(str_glue("{base_dir}/gfx"))
-        data_dir    <- c(str_glue("{base_dir}/data"))
-        results_dir <- c(str_glue("{base_dir}/results"))
-        meta_dir    <- c(str_glue("{base_dir}/meta"))
-        output_dir  <- c(str_glue("{data_dir}/{name}-out"))
-        states_dir  <- c(str_glue("{output_dir}/states"))
-        config      <- c(str_glue("{data_dir}/{name}.bici"))
+        base_dir    <- file.path("datasets", dataset)
+        gfx_dir     <- file.path(base_dir, "gfx")
+        data_dir    <- file.path(base_dir, "data")
+        results_dir <- file.path(base_dir, "results")
+        meta_dir    <- file.path(base_dir, "meta")
+        config      <- file.path(data_dir, str_glue("{name}.bici"))
+        output_dir  <- file.path(data_dir, str_glue("{name}-out"))
     }
 
     # Population setup ----
