@@ -7,6 +7,10 @@ Authors@R: c(
       "Jamie", "prentice",
       email = "jamie.c.prentice@gmail.com",
       role = c("aut", "cre")
+    ),
+    person(
+      "University of Edinburgh",
+      role = c("cph", "fnd")
     )
   )
 Description: Build Genetic Epidemiological Models, simulate either within R or
@@ -15,9 +19,11 @@ License: MIT
 Encoding: UTF-8
 LazyData: true
 ByteCompile: true
-Depends: R (>= 4.2.0), data.table, purrr, stringr, ggplot2, lubridate, tictoc
-Imports: MASS, Matrix, coda, fitdistrplus, ggthemes,
-    ggcorrplot, cowplot, pROC, viridisLite
+Depends: R (>= 4.2.0), data.table, purrr, stringr, ggplot2, HDInterval,
+    lubridate, tictoc
+Imports: MASS, Matrix, coda, fitdistrplus, ggthemes, ggcorrplot, cowplot, pROC,
+    viridisLite, RColorBrewer, ggtext, ggeasy, extrafont 
+Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Suggests: 
     testthat (>= 3.0.0)
