@@ -4,10 +4,10 @@
 # from within R or from BICI, and submitting to BICI for posterior inference.
 
 ## Load libraries and source files ----
-library(devtools)
 suppressPackageStartupMessages(
-    load_all()
+    devtools::load_all()
 )
+
 time_start <- now()
 
 # for testing only
@@ -144,6 +144,8 @@ plt
         walk(~ message("- mkdir ", .x)) |>
         walk(dir.create, recursive = TRUE)
 
+    params$DEBUG <- FALSE
+
     # Clean up old config files and generate fresh one
     cleanup_bici_files(params)
     bici_txt <- generate_bici_script(popn, params)
@@ -156,13 +158,13 @@ plt
     cmd <- with(params, str_glue(
         if (algorithm == "pas")
             "mpirun -n {nchains} --output :raw --oversubscribe " else "",
-        "../BICI/bici-{platform} {data_dir}/{config} {bici_cmd}",
+        "../BICI/bici-{platform} {config} {bici_cmd}",
         platform = Sys.info()[["sysname"]]
     ))
     message(str_glue("Running:\n$ {cmd}"))
 
     tic()
-    out <- system(cmd)
+    out <- if (params$DEBUG) 0 else system(cmd)
     time_taken <- toc()
 
     if (out != 0) {
