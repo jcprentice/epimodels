@@ -22,7 +22,7 @@ ByteCompile: true
 Depends: R (>= 4.2.0), data.table, purrr, stringr, ggplot2, HDInterval,
     lubridate, tictoc
 Imports: MASS, Matrix, coda, fitdistrplus, ggthemes, ggcorrplot, cowplot, pROC,
-    viridisLite, RColorBrewer, ggtext, ggeasy, extrafont 
+    viridisLite, RColorBrewer, ggtext, ggeasy, extrafont, here
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Suggests: 
