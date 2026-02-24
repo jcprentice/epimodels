@@ -27,9 +27,9 @@ make_parameters(
 \arguments{
 \item{model_type}{Epidemic model: "SIR", "SIDR", "SEIR", "SEIDR"}
 
-\item{name}{Filename for data}
+\item{name}{Name of scenario within dataset (default "scen-1-1")}
 
-\item{dataset}{Folder suffix for data (default "")}
+\item{dataset}{Name for overall dataset (default "testing")}
 
 \item{scenario}{Integer for scenario}
 
@@ -38,19 +38,36 @@ make_parameters(
 \item{setup}{Population layout}
 
 \item{use_traits}{Which traits to use (this is going to be "clever") use
-"all" or "none", or a subset using the first letter of each trait
-"sildt" = "sus", "inf", "lat", "det", "tol"}
+\itemize{
+\item "all" or "none", or a subset using the first letter of each trait
+\item "sildt" = "sus", "inf", "lat", "det", "tol"
+}}
 
-\item{vars}{Variances: diagonal of cov matrix, either
-- a single value, e.g. 1.0
-- a list wrapped vector of compatible length, e.g. list(1, 1.5, 0, 0, 0.5)
-- a list wrapped named vector e.g. list(sus = 1, inf = 1.5, tol = 0.5, default = 0)}
+\item{vars}{Variances: diagonal of covariance matrix, either
+\itemize{
+\item a single value, e.g. 1.0
+\item a list wrapped vector of compatible length, e.g.
+\itemize{
+\item list(1, 1.5, 0, 0, 0.5)
+}
+\item a list wrapped named vector e.g.
+\itemize{
+\item list(sus = 1, inf = 1.5, tol = 0.5, default = 0)
+}
+}}
 
 \item{cors}{Correlations for Sigma matrix, either
-- a single numerical value, e.g. 0.2
-- a named list-wrapped vector, e.g. list(si = 0.3, st = -0.1, it = 0.2, default = 0)
-- a named list of compatible with the lower triangle order, e.g.
-  list(si, sl, sd, st, il, id, it, ld, lt, dt)}
+\itemize{
+\item a single numerical value, e.g. 0.2
+\item a named list-wrapped vector, e.g.
+\itemize{
+\item list(si = 0.3, st = -0.1, it = 0.2, default = 0)
+}
+\item a named list of compatible with the lower triangle order, e.g.
+\itemize{
+\item list(si, sl, sd, st, il, id, it, ld, lt, dt)
+}
+}}
 
 \item{group_layout}{How to arrange individuals into groups: "random",
 "striped", "family", "fishboost"}
@@ -58,9 +75,9 @@ make_parameters(
 \item{group_effect}{Include group effect if >= 0, simulate if appropriate and
 check, ignore if < 0}
 
-\item{trial_fe}{List of fixed effects to check for Trial
-Should also simulate these if not using FB dataset. A string with the first
-letters of traits, e.g. "lidt"}
+\item{trial_fe}{List of fixed effects to check for Trial Should also simulate
+these if not using FB dataset. A string with the first letters of traits,
+e.g. "lidt"}
 
 \item{donor_fe}{List of fixed effects to check for Donor}
 
@@ -68,15 +85,18 @@ letters of traits, e.g. "lidt"}
 
 \item{weight_fe}{List of fixed effects to check for Weight}
 
-\item{weight_is_nested}{should weight be nested across trials? (default TRUE),}
+\item{weight_is_nested}{should weight be nested across trials? (default
+TRUE),}
 
 \item{sim_new_data}{Simulate new data in "r" or "bici". Alternatively, "no"
 for using FB data, or "etc_sim" or "etc_inf" for getting data from an
 existing dataset (specified in patches)}
 }
 \value{
-a list containing all the parameters
+A list containing all the parameters
 }
 \description{
-Generate a list of parameters
+Generate a complete list of parameters, factoring in arguments
+provided. Values can be modified later if preferred, but be careful about
+maintaining consistency.
 }
