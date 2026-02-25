@@ -1,7 +1,5 @@
 # if we want the same data as example.xml (handy for exploring the structure)
 
-
-
 #' Generate BICI script
 #'
 #' @param popn A population with traits and epidemic times
