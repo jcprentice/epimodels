@@ -204,6 +204,8 @@ make_parameters <- function(
     # Likely using only a subset of traits
     use_traits <- if (use_traits %in% c("", "none", NA)) {
         ""
+    } else if (use_traits == "all") {
+        model_traits |> str_1st() |> str_flatten()
     } else {
         str_to_lower(use_traits)
     }
