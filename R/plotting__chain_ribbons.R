@@ -9,17 +9,22 @@ if (FALSE) {
 
 plot_chain_ribbons <- function(dataset = "fb-test", scen = 1, use_hpdi = TRUE) {
     if (FALSE) {
-        dataset <- "fb-qtest"; scen <- 1; use_hpdi <- TRUE
+        dataset <- "fb-test"; scen <- 1; use_hpdi <- TRUE
     }
 
-    f <- str_glue("datasets/{dataset}/data/scen-{scen}-1-out/trace_combine.tsv")
+    files <- list.files(str_glue("{dataset}/data/scen-{scen}-1-out"),
+                        pattern = "trace",
+                        full.names = TRUE) |>
+        str_subset("combine", negate = TRUE) |>
+        str_sort(numeric = TRUE)
 
-    if (!file.exists(f)) {
-        message("No trace file found!")
+    if (length(files) == 0) {
+        message("No files found!")
         return(NULL)
     }
 
-    x <- fread(f)
+    x <- map(files, \(x) fread(x)) |>
+        rbindlist(idcol = "chain")
 
     x[, str_subset(names(x), "state|Group|^G_|L_|Prior|Posterior|Number|log") := NULL]
     x[, names(.SD) := map(.SD, as.double)]
