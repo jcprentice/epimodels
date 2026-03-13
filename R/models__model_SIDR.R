@@ -6,6 +6,7 @@
 #' @returns A new popn with epidemic event times, generation, and infectors
 #' @export
 
+# Main model ----
 model_SIDR <- function(popn, params) {
     message("Simulating an SIDR groups epidemic ...")
 
