@@ -30,7 +30,7 @@ make_grm <- function(popn, use_grm) {
            NULL)
 }
 
-
+# Build numerator relationship "A" matrix from pedigree part of popn file
 make_A_matrix <- function(popn) {
     message("Building the A-matrix ...")
 
