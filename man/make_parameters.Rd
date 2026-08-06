@@ -11,12 +11,12 @@ make_parameters(
   scenario = 1L,
   replicate = 1L,
   setup = "fb_12_rpw",
-  ies = "sit",
+  IEs = "sit",
   vars = 1,
   cors = 0.2,
   group_layout = "fishboost",
   group_effect = -1,
-  fes = list(sex = "sit", age = "sit", weight = "sit"),
+  FEs = list(sex = "sit", age = "sit", weight = "sit"),
   sim_new_data = "r",
   protocol = NULL
 )
@@ -34,7 +34,7 @@ make_parameters(
 
 \item{setup}{Population layout}
 
-\item{ies}{Which traits are affected by individual genetic effects, either in
+\item{IEs}{Which traits are affected by individual genetic effects, either in
 simulation or inference. This should correspond to the names of the model
 traits used. Use a trait's first letter if used, or _ if unused. For linked
 traits use the letter of the trait it's linked to. "", "all", or "none" are
@@ -72,7 +72,7 @@ also accepted, with the obvious meanings/}
 \item{group_effect}{Include group effect if >= 0, simulate if appropriate and
 check, ignore if < 0}
 
-\item{fes}{A list of Fixed Effect names. Values should correspond to the full
+\item{FEs}{A list of Fixed Effect names. Values should correspond to the full
 list of model traits they apply to, e.g. for an SEIR model with traits
 "silt" use:
 list(sex = "silt",   # all traits used
