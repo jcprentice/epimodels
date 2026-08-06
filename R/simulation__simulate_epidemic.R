@@ -10,7 +10,7 @@
 
 simulate_epidemic <- function(popn, params) {
     switch(params$model_type,
-           "SI"  = model_SI(popn, params), # not yet implemented
+           "SI" = model_SI(popn, params), # not yet implemented
            "SIS" = model_SIS(popn, params),
            "SIR" = model_SIR(popn, params),
            "SEIR" = model_SEIR(popn, params),
