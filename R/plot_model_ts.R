@@ -122,7 +122,7 @@ plot_SEIR <- function(popn, params) {
         geom_line(linewidth = 1.2) +
         scale_colour_manual("Compartments",
                             breaks = c("S", "E", "I", "R"),
-                            breaks = c("Susceptible", "Exposed", "Infectious", "Removed"),
+                            labels = c("Susceptible", "Exposed", "Infectious", "Removed"),
                             values = c("blue", "pink", "red", "green")) +
         coord_cartesian(xlim = c(0, min(tmax, max(events$time), na.rm = TRUE)),
                         ylim = c(0, 1)) +
@@ -148,7 +148,7 @@ plot_SIR <- function(popn, params) {
         geom_line(linewidth = 1.2) +
         scale_colour_manual("Compartments",
                             breaks = c("S", "I", "R"),
-                            breaks = c("Susceptible", "Infectious", "Removed"),
+                            labels = c("Susceptible", "Infectious", "Removed"),
                             values = c("blue", "red", "green")) +
         coord_cartesian(xlim = c(0, min(tmax, max(events$time), na.rm = TRUE)),
                         ylim = c(0, 1)) +
