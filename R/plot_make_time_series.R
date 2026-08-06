@@ -186,7 +186,8 @@ make_time_series_sir <- function(popn, params) {
 make_time_series_sis <- function(popn, params) {
     compartments <- c("S", "I")
     # tmax <- params$tmax
-    tmax <- max(popn$Tdeath, na.rm = TRUE)
+    tmax <- popn[sdp == "progeny", map_dbl(Tdeath, last) |> max(na.rm = TRUE)]
+    tmax <- min(tmax, params$t_end)
 
     popn2 <- popn[sdp == "progeny", .(Tinf, Tdeath)]
     N <- popn2[, .N]
@@ -194,8 +195,8 @@ make_time_series_sis <- function(popn, params) {
     X <- rbind(
         data.table(event = factor("start", c("start", "infection", "removal", "end")),
                    time = 0.0),
-        data.table(event = "infection", time = popn$Tinf),
-        data.table(event = "removal",   time = popn$Tdeath),
+        data.table(event = "infection", time = list_c(popn$Tinf)),
+        data.table(event = "removal",   time = list_c(popn$Tdeath)),
         data.table(event = "end",       time = tmax))
 
     X <- X[is.finite(time)]

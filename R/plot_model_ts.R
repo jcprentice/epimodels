@@ -44,7 +44,8 @@ plot_SxxDR <- function(popn, params) {
                             breaks = c("Susceptible?", "Detectable", "Removed"),
                             values = c("blue", "red", "green")) +
         labs(title = "SxxDR", x = "Time (days)", y = "Proportion") +
-        coord_cartesian(xlim = c(0, min(tmax, max(events$time), na.rm = TRUE))) +
+        coord_cartesian(xlim = c(0, min(tmax, max(events$time), na.rm = TRUE)),
+                        ylim = c(0, 1)) +
         theme_bw() +
         theme(legend.position = "bottom")
 }
@@ -69,7 +70,8 @@ plot_SEIDR <- function(popn, params) {
                                        "Infectious (I+D)", "Removed (R)"),
                             # values = c("blue", "pink", "purple", "darkgreen", "green", "red")) +
                             values = c(viridisLite::viridis(5), "red")) +
-        coord_cartesian(xlim = c(0, min(tmax, max(events$time), na.rm = TRUE))) +
+        coord_cartesian(xlim = c(0, min(tmax, max(events$time), na.rm = TRUE)),
+                        ylim = c(0, 1)) +
         labs(x = "Time (days)",
              y = "Proportion",
              title = "SEIDR model") +
@@ -96,7 +98,8 @@ plot_SIDR <- function(popn, params) {
                                        "Detectable (D)", "Infectious (I+D)",
                                        "Removed (R)"),
                             values = c("blue", "mediumpurple", "purple", "red", "green")) +
-        coord_cartesian(xlim = c(0, min(tmax, max(events$time), na.rm = TRUE))) +
+        coord_cartesian(xlim = c(0, min(tmax, max(events$time), na.rm = TRUE)),
+                        ylim = c(0, 1)) +
         labs(x = "Time (days)",
              y = "Proportion",
              title = "SIDR model") +
@@ -121,7 +124,8 @@ plot_SEIR <- function(popn, params) {
                             breaks = c("S", "E", "I", "R"),
                             breaks = c("Susceptible", "Exposed", "Infectious", "Removed"),
                             values = c("blue", "pink", "red", "green")) +
-        coord_cartesian(xlim = c(0, min(tmax, max(events$time), na.rm = TRUE))) +
+        coord_cartesian(xlim = c(0, min(tmax, max(events$time), na.rm = TRUE)),
+                        ylim = c(0, 1)) +
         labs(x = "Time (days)",
              y = "Proportion",
              title = "SEIR model") +
@@ -146,7 +150,8 @@ plot_SIR <- function(popn, params) {
                             breaks = c("S", "I", "R"),
                             breaks = c("Susceptible", "Infectious", "Removed"),
                             values = c("blue", "red", "green")) +
-        coord_cartesian(xlim = c(0, min(tmax, max(events$time), na.rm = TRUE))) +
+        coord_cartesian(xlim = c(0, min(tmax, max(events$time), na.rm = TRUE)),
+                        ylim = c(0, 1)) +
         labs(x = "Time (days)",
              y = "Proportion",
              title = "SIR model") +
@@ -155,7 +160,7 @@ plot_SIR <- function(popn, params) {
 
 
 plot_SIS <- function(popn, params) {
-    message("Plotting SIS model - warning: this is currently broken")
+    message("Plotting SIS model")
 
     N <- popn[sdp == "progeny", .N]
     tmax <- params$tmax
@@ -169,9 +174,10 @@ plot_SIS <- function(popn, params) {
         geom_line(linewidth = 1.2) +
         scale_colour_manual("Compartments",
                             breaks = c("S", "I"),
-                            breaks = c("Susceptible", "Infectious"),
+                            labels = c("Susceptible", "Infectious"),
                             values = c("blue", "red")) +
-        coord_cartesian(xlim = c(0, min(tmax, max(events$time), na.rm = TRUE))) +
+        coord_cartesian(xlim = c(0, min(tmax, max(events$time), na.rm = TRUE)),
+                        ylim = c(0, 1)) +
         labs(x = "Time (days)",
              y = "Proportion",
              title = "SIS model") +
