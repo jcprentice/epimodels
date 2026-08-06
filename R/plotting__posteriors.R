@@ -158,7 +158,7 @@ plot_posteriors <- function(dataset = "fb-final", scen = 1, rep = 1,
         xp <- x2[parameter == par, .(value)]
 
         if (sd(xp$value) == 0) {
-            # latent_period breaks since sd is 0
+            # LP breaks since sd is 0
             dd <- data.table(x = xp$value[[1]] * c(0.95, 1, 1.05),
                              y = c(0, 1, 0))
         } else {
