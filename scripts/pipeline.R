@@ -128,6 +128,7 @@ if (params$sim_new_data |> str_to_lower() == "r") {
 
 plt <- plot_model(popn, params)
 
+stop()
 
 ## Generate config files ----
 
