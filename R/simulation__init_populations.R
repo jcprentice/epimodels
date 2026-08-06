@@ -16,8 +16,8 @@ init_popn <- function(popn, params) {
                  generation = NA_integer_)]
 
     # Handle donors
-    popn2[, `:=`(generation = fifelse(donor == 1L, 1L, NA_integer_),
-                 infected_by = fifelse(donor == 1L, 0L, NA_integer_))]
+    popn2[, `:=`(generation = fifelse(donor == 1L, 1L, NA),
+                 infected_by = fifelse(donor == 1L, 0L, NA))]
 
     # Select appropriate path generating function
     gp <- get(str_c("generate_", str_to_lower(model_type), "_path"))
