@@ -1,3 +1,5 @@
+# Initialise populations
+# Does some trickery to choose the right functions to call
 init_popn <- function(popn, params) {
     compartments <- params$compartments
     timings      <- params$timings
@@ -14,8 +16,8 @@ init_popn <- function(popn, params) {
                  generation = NA_integer_)]
 
     # Handle donors
-    popn2[donor == 1L, `:=`(generation = 1L,
-                            infected_by = 0L)]
+    popn2[, `:=`(generation = fifelse(donor == 1L, 1L, NA_integer_),
+                 infected_by = fifelse(donor == 1L, 0L, NA_integer_))]
 
     # Select appropriate path generating function
     gp <- get(str_c("generate_", str_to_lower(model_type), "_path"))
