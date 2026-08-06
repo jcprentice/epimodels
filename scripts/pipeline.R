@@ -24,16 +24,13 @@ run_from_script <- length(cmd_args) > 0
         dataset = "testing",
         name = "scen-1-1",
         setup = "fb_12_rpw", # chris, small, fb_12, fb_1, fb_2, single
-        use_traits = "sit", # "all", "none", "sit", "si" etc.
+        ies = "sit", # "all", "none", "sit", "si" etc.
         vars = 0.5, # c(0.5, 1.5, 0, 0, 0.5)
         cors = 0.2, # c(0.2, ..., 0.2)
         group_layout = "fishboost", # "random", "family", "striped", "fishboost"
-        trial_fe = "ildt",
-        donor_fe = "ildt",
-        txd_fe = "ildt",
-        weight_fe = "sildt",
-        weight_is_nested = TRUE,
-        sim_new_data = "no"
+        fes = list(trial = "ildt", donor = "ildt", txd = "ildt",
+                   weight1 = "sildt", weight2 = "sildt"),
+        sim_new_data = "r"
     )
 
     # Temporary override of some parameters
@@ -66,15 +63,15 @@ run_from_script <- length(cmd_args) > 0
     params$traits_source <- "pedigree" # posterior
     params$patch_type <- "median"
     params$patch_state <- TRUE
-    params$skip_patches <- c("") #, "covariance")
+    params$skip_patches <- "" #, c("covars", "beta", ...)
 
     # params$ge_opts <- "e1" # Optional genetic effects
 
-    params <- params |>
-        patch_params() |>  # Patch params with posteriors from dataset / scenario
-        # set_ge_opts() |>   # Genetic covariance options
-        set_use_flags() |> # Ensure priors are correctly enabled
-        apply_links()      # Fix any traits that need to be linked
+    params2 <- params |>
+        patch_params() |> # Patch params with posteriors from dataset / scenario
+        set_use_flags()   # Ensure priors are correctly enabled
+        # apply_links()     # Fix any traits that need to be linked
+    params <- params2
 
     # Quick check of how things are looking
     summarise_params(params)
@@ -86,9 +83,9 @@ run_from_script <- length(cmd_args) > 0
 if (params$sim_new_data != "no") {
     popn <- make_pedigree(params) |>
         set_groups(params) |> # Set groups, trial, donors, and group effect
-        set_traits(params) |>
+        set_traits(params) |> # Set genotypic and environmental traits
         set_weights(params) |>
-        apply_fixed_effects(params)
+        apply_fixed_effects(params) # Set phenotypes
 } else {
     popn <- readRDS(str_glue("fb_data/{params$setup}.rds"))
 
@@ -101,15 +98,14 @@ if (params$sim_new_data != "no") {
 
 ## Simulate and plot epidemic ----
 
-if (params$sim_new_data == "r") {
+if (params$sim_new_data |> str_to_lower() == "r") {
     tic(); popn <- simulate_epidemic(popn, params); toc()
-    popn[sdp == "progeny", parasites := !is.na(Tinf)]
 
     params$estimated_R0 <- get_R0(popn)
     params$tmax <- get_tmax(popn, params)
 
     message("Tmax = ", str_flatten_comma(params$tmax))
-} else if (params$sim_new_data == "bici") {
+} else if (params$sim_new_data |> str_to_lower() == "bici") {
     params$tmax <- c(t1 = 200, t2 = 200)
 } else {
     # If Tinf, Tinc etc. are not in popn, create missing column(s) and set to NA
@@ -130,8 +126,6 @@ if (params$sim_new_data == "r") {
 ### Plot the epidemic ----
 
 plt <- plot_model(popn, params)
-plt
-
 
 
 ## Generate config files ----
@@ -214,7 +208,7 @@ plt
         mget() |>
         saveRDS(file = str_glue("{results_dir}/{name}.rds"))
 
-    # Generate etc_inf.rds summary file
+    # Generate summary_inf.rds summary file
     flatten_bici_states(dataset, name, bici_cmd)
 }
 
