@@ -24,7 +24,9 @@ init_popn <- function(popn, params) {
 
     # Generate paths for donors
     walk(popn2[, .I[donor == 1L]], \(i) {
-        set(popn2, i, c("status", timings), gp(0.0, popn2, i, params))
+        set(popn2, i, c("status", timings),
+            c(compartments[[2]], 0.0,
+              as.list(gp(0.0, popn2, i, params))))
     })
 
     popn2

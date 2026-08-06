@@ -46,7 +46,7 @@ model_SEIR <- function(popn, params) {
             if (is.na(t_next_event)) t_next_event <- Inf
 
             if (DEBUG) message("Next NI event id = ", id_next_event,
-                " at t = ", signif(t_next_event, 5))
+                               " at t = ", signif(t_next_event, 5))
 
             # generate random timestep ----
             total_inf_rate <- sum(X$inf_rate)
@@ -74,11 +74,12 @@ model_SEIR <- function(popn, params) {
                 next_gen <- infectives[id == infd_by, generation + 1L]
 
                 seir_path <- generate_seir_path(epi_time, X, id_next_event, params)
-                set(X, id_next_event, c("status", "Tinf", "Tsign", "Tdeath"), seir_path)
 
-                ni_events[I == id_next_event, time := as.numeric(seir_path[-(1:2)])]
+                set(X, id_next_event,
+                    c("status", "Tinf", "Tsign", "Tdeath"),
+                    c("E", epi_time, as.list(seir_path), next_gen, infd_by))
 
-                set(X, id_next_event, c("generation", "infected_by"), list(next_gen, infd_by))
+                ni_events[I == id_next_event, time := seir_path]
 
                 if (DEBUG) message("ID ", id_next_event, ": S -> E, infected by ID ", infd_by)
             } else {
@@ -137,12 +138,10 @@ model_SEIR <- function(popn, params) {
 # A Susceptible individual's future disease trajectory is fixed at the point of
 # exposure.
 generate_seir_path <- function(epi_time, X, id, params) {
-    with(params, {
-        Tinf   <- epi_time
-        Tsign  <- Tinf  + rgamma(1L, LP_shape, scale = LP_scale * X$lat[[id]])
-        Tdeath <- Tsign + rgamma(1L, RP_shape, scale = RP_scale * X$tol[[id]])
-
-        list("E", Tinf, Tsign, Tdeath)
-    })
+    with(params,
+         rgamma(2L, c(LP_shape, RP_shape),
+                scale = c(LP_scale * X$lat[[id]],
+                          RP_scale * X$tol[[id]])) |>
+             cumsum() + epi_time)
 }
 

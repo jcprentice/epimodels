@@ -22,15 +22,10 @@ model_SIS <- function(popn, params) {
     nax <- function(x, y) if (is.na(last(x))) y else c(x, y)
 
     # This is unique to the SIS and SIRS models
-    Tinf <- copy(X$Tinf)
-    Tdeath <- copy(X$Tdeath)
-    X[, `:=`(Tinf = vector("list", .N),
-             Tdeath = vector("list", .N))]
-
-    walk(seq_len(nrow(X)), \(i) {
-        set(X, i, c("Tinf", "Tdeath"),
-            list(Tinf[[i]], Tdeath[[i]]))
-    })
+    X[, `:=`(Tinf = as.list(Tinf),
+             Tdeath = as.list(Tdeath),
+             generation = as.list(generation),
+             infected_by = as.list(infected_by))]
 
     # This is a priority queue for the next event
     ni_events <- X[, .(.I, map_dbl(Tdeath, last))] |>
@@ -57,7 +52,6 @@ model_SIS <- function(popn, params) {
         if (DEBUG) message("Next NI event id = ", id_next_event,
                            " at t = ", t_next_event)
 
-
         # generate random timestep ----
         total_inf_rate <- sum(X$inf_rate)
 
@@ -79,24 +73,20 @@ model_SIS <- function(popn, params) {
             group_id <- X$group[id_next_event]
             infectives <- X[group == group_id & status == "I",
                             .(id, group, status, inf, generation)]
-            infd_by <- safe_sample(x = infectives$id,
-                                   size = 1L,
-                                   prob = infectives$inf)
-            next_gen <- infectives[id == infd_by, generation + 1L]
-            cur_gen <- X$generation[[id_next_event]]
+            infd_by <- infectives[, safe_sample(id, 1L, prob = inf)]
+            next_gen <- infectives[id == infd_by, last(unlist(generation)) + 1L]
 
             sis_path <- generate_sis_path(epi_time, X, id_next_event, params)
 
             set(X, id_next_event,
                 c("status", "Tinf", "Tdeath", "generation", "infected_by"),
                 list("I",
-                     nax(X$Tinf[[id_next_event]], sis_path$Tinf),
-                     nax(X$Tdeath[[id_next_event]], sis_path$Tdeath),
-                     if (is.na(cur_gen)) next_gen else cur_gen,
-                     infd_by))
+                     nax(X$Tinf[[id_next_event]], epi_time),
+                     nax(X$Tdeath[[id_next_event]], sis_path),
+                     nax(X$generation[[id_next_event]], next_gen),
+                     nax(X$infected_by[[id_next_event]], infd_by)))
 
-
-            ni_events[I == id_next_event, time := sis_path$Tdeath]
+            ni_events[I == id_next_event, time := sis_path]
 
             if (DEBUG) message("ID ", id_next_event, ": S -> I, infected by ID ", infd_by)
         } else {
@@ -135,7 +125,7 @@ model_SIS <- function(popn, params) {
 
     # tidy up X
     X[, c("group_inf", "inf_rate") := NULL]
-    X[, parasites := !is.na(Tinf)]
+    X[, parasites := !is.na(map_dbl(Tinf, last))]
     setorder(X, id)
 
     popn2 <- rbind(popn[sdp != "progeny"], X, fill = TRUE)
@@ -147,10 +137,8 @@ model_SIS <- function(popn, params) {
 # A Susceptible individual's future disease trajectory is fixed at the point of
 # exposure.
 generate_sis_path <- function(epi_time, X, id, params) {
-    with(params, {
-        Tinf   <- epi_time
-        Tdeath <- Tinf + rgamma(1L, RP_shape, scale = RP_scale * X$tol[[id]])
-
-        list(status = "I", Tinf = Tinf, Tdeath = Tdeath)
-    })
+    with(params,
+        rgamma(1L, RP_shape,
+               scale = RP_scale * X$tol[[id]]) + epi_time)
 }
+

@@ -74,11 +74,12 @@ model_SIR <- function(popn, params) {
                 next_gen <- infectives[id == infd_by, generation + 1L]
 
                 sir_path <- generate_sir_path(epi_time, X, id_next_event, params)
-                set(X, id_next_event, c("status", "Tinf", "Tdeath"), sir_path)
 
-                ni_events[I == id_next_event, time := as.numeric(sir_path[-(1:2)])]
+                set(X, id_next_event,
+                    c("status", "Tinf", "Tdeath", "generation", "infected_by"),
+                    c("I", epi_time, sir_path, next_gen, infd_by))
 
-                set(X, id_next_event, c("generation", "infected_by"), list(next_gen, infd_by))
+                ni_events[I == id_next_event, time := sir_path]
 
                 if (DEBUG) message("ID ", id_next_event, ": S -> I, infected by ID ", infd_by)
             } else {
@@ -133,10 +134,8 @@ model_SIR <- function(popn, params) {
 # A Susceptible individual's future disease trajectory is fixed at the point of
 # exposure.
 generate_sir_path <- function(epi_time, X, id, params) {
-    with(params, {
-        Tinf   <- epi_time
-        Tdeath <- Tinf + rgamma(1L, RP_shape, scale = RP_scale * X$tol[[id]])
-
-        list("I", Tinf, Tdeath)
-    })
+    with(params,
+         rgamma(1L, RP_shape,
+                scale = RP_scale * X$tol[[id]]) + epi_time)
 }
+

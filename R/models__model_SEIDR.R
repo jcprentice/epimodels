@@ -49,7 +49,7 @@ model_SEIDR <- function(popn, params) {
             if (is.na(t_next_event)) t_next_event <- Inf
 
             if (DEBUG) message("Next NI event id = ", id_next_event,
-                " at t = ", signif(t_next_event, 5))
+                               " at t = ", signif(t_next_event, 5))
 
             # generate random timestep ----
             total_inf_rate <- sum(X$inf_rate)
@@ -75,11 +75,12 @@ model_SEIDR <- function(popn, params) {
                 next_gen <- X$generation[[xi]] + 1L
 
                 seidr_path <- generate_seidr_path(epi_time, X, id_next_event, params)
-                set(X, id_next_event, c("status", "Tinf", "Tinc", "Tsign", "Tdeath"), seidr_path)
 
-                ni_events[I == id_next_event, time := as.numeric(seidr_path[-(1:2)])]
+                set(X, id_next_event,
+                    c("status", "Tinf", "Tinc", "Tsign", "Tdeath", "generation", "infected_by"),
+                    c("E", epi_time, as.list(seidr_path), next_gen, infd_by))
 
-                set(X, id_next_event, c("generation", "infected_by"), list(next_gen, infd_by))
+                ni_events[I == id_next_event, time := seidr_path]
 
                 if (DEBUG) message("ID ", id_next_event, ": S -> E, infected by ID ", infd_by)
             } else {
@@ -143,13 +144,11 @@ model_SEIDR <- function(popn, params) {
 # A Susceptible individual's future disease trajectory is fixed at the point of
 # exposure.
 generate_seidr_path <- function(epi_time, X, id, params) {
-    with(params, {
-        Tinf   <- epi_time
-        Tinc   <- Tinf  + rgamma(1L, LP_shape, scale = LP_scale * X$lat[[id]])
-        Tsign  <- Tinc  + rgamma(1L, DP_shape, scale = DP_scale * X$det[[id]])
-        Tdeath <- Tsign + rgamma(1L, RP_shape, scale = RP_scale * X$tol[[id]])
-
-        list("E", Tinf, Tinc, Tsign, Tdeath)
-    })
+    with(params,
+         rgamma(3L, c(LP_shape, DP_shape, RP_shape),
+                scale = c(LP_scale * X$lat[[id]],
+                          DP_scale * X$det[[id]],
+                          RP_scale * X$tol[[id]])) |>
+             cumsum() + epi_time)
 }
 
