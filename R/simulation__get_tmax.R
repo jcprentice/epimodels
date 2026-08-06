@@ -19,7 +19,7 @@ get_tmax <- function(popn, params) {
         return(c(t1 = 104, t2 = 160))
     }
 
-    x1 <- popn[sdp == "progeny", .(id, trial, Tdeath)]
+    x1 <- popn[sdp == "progeny", .(id, trial, Tdeath = map_dbl(Tdeath, last))]
 
     x1[, Tdeath := fifelse(is.na(Tdeath),
                            max(Tdeath, na.rm = TRUE),
