@@ -31,7 +31,7 @@ rename_bici_pars <- function(pars) {
 #'
 #' Turns the short name parameters into something suitable for printing, e.g.
 #' - "cov_G_ss" -> "Var G (sus)"
-#' - "latent_period" -> "Latent Period (days)"
+#' - "LP" -> "Latent Period (days)"
 #' - "trial_i" -> "Trial Infectivity"
 #'
 #' @param pars A character vector of parameter names
@@ -41,11 +41,11 @@ rename_bici_pars <- function(pars) {
 
 rename_pars <- function(pars) {
     pars |> str_replace_all(
-        c("latent_period" = "Latent Period (days)",
+        c("LP" = "Latent Period (days)",
           "LP_shape" = "LP shape",
-          "detection_period" = "Detection Period (days)",
+          "DP" = "Detection Period (days)",
           "DP_shape" = "DP shape",
-          "removal_period" = "Removal Period (days)",
+          "RP" = "Removal Period (days)",
           "RP_shape" = "RP shape",
           "infrat" = "Inf ratio",
           "_s$" = "_Susceptibility",
@@ -85,8 +85,7 @@ param_order <- c(
     "gamma_shape_Tr1,Rec", "gamma_shape_Tr2,Don", "gamma_shape_Tr2,Rec",
 
     # SIRE parameters
-    "beta", "latent_period", "LP_shape", "detection_period", "DP_shape",
-    "removal_period", "RP_shape", "sigma",
+    "beta", "LP", "LP_shape", "DP", "DP_shape", "RP", "RP_shape", "sigma",
     "cov_G_ss", "cov_G_ii",  "cov_G_tt", "r_G_si", "r_G_st", "r_G_it",
     "cov_E_ss", "cov_E_ii",  "cov_E_tt", "r_E_si", "r_E_st", "r_E_it",
     "cov_P_ss", "cov_P_ii",  "cov_P_tt", "h2_ss", "h2_ii", "h2_tt",
