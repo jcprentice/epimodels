@@ -411,6 +411,9 @@ make_parameters <- function(
 
     # Additional settings ----
 
+    # Important for SIS model which may not end otherwise
+    t_end <- 100
+
     popn_format <- c("intervals", "times")[[2]]
 
     seed <- 0
@@ -494,7 +497,7 @@ make_parameters <- function(
           "fix_donors", "t_demote", "fix_eq_time",
           "pass_events", "patch_dataset", "patch_name", "patch_type", "patch_state",
           "use_weight", "use_grm", "traits_source",
-          "show_plots", "msgs", "DEBUG"))
+          "t_end", "show_plots", "msgs", "DEBUG"))
 
     params
 }
