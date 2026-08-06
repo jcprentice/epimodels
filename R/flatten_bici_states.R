@@ -188,12 +188,12 @@ flatten_bici_states <- function(dataset = "fb-test",
             popn <- merge(base_popn, transitions, by = "id", all = TRUE)
 
 
-            if (params$ies %notin% c("none", "")) {
+            if (params$IEs %notin% c("none", "")) {
                 i_lines <- get_section(lines1, headers, "INDIVIDUALS") |>
                     str_squish() |>
                     str_subset(".+")
-                ies <- fread(text = i_lines)
-                ies[, `:=`(index = ids, source = NULL, events = NULL)] |>
+                IEs <- fread(text = i_lines)
+                IEs[, `:=`(index = ids, source = NULL, events = NULL)] |>
                     setnames(c("index",
                                "sg", "ig", "lg", "dg", "tg",
                                "se", "ie", "le", "de", "te"),
@@ -204,8 +204,8 @@ flatten_bici_states <- function(dataset = "fb-test",
                     setorder(id)
 
                 # inf returns LN dist'd IEs, need to rescale them
-                if (ies[, min(.SD) > 0, .SDcols = -1]) {
-                    ies[, names(.SD) := map(.SD, ~ log(.x) + var(log(.x)) / 2), .SDcols = -1]
+                if (IEs[, min(.SD) > 0, .SDcols = -1]) {
+                    IEs[, names(.SD) := map(.SD, ~ log(.x) + var(log(.x)) / 2), .SDcols = -1]
                 }
             } else {
                 cols <- names(res$popn) |>
@@ -217,11 +217,11 @@ flatten_bici_states <- function(dataset = "fb-test",
                                       "detectability"  = "det",
                                       "tolerance"      = "tol",
                                       "BV" = "g", "EV" = "e"))
-                ies <- res$popn[, ..cols] |>
+                IEs <- res$popn[, ..cols] |>
                     setnames(cols, cols2)
             }
 
-            popn <- merge(popn, ies, by = "id", all = TRUE)
+            popn <- merge(popn, IEs, by = "id", all = TRUE)
 
             cat(".", file = stderr())
 

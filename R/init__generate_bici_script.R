@@ -370,12 +370,12 @@ generate_bici_script <- function(popn, params) {
         ## Additive genetic effects ----
 
         # IEs as "sg,ig,tg". We use this several times, so keep it.
-        ies_used <- uniq_chars(ies) |> str_subset("_", negate = TRUE)
-        ies_str <- str_c(intersect(str_chars(ies),
+        IEs_used <- uniq_chars(IEs) |> str_subset("_", negate = TRUE)
+        IEs_str <- str_c(intersect(str_chars(IEs),
                                    str_chars(link_traits)),
                          "g", collapse = ",")
 
-        if (ies %notin% c("", "none")) {
+        if (IEs %notin% c("", "none")) {
 
             # BICI can only handle one of inverse or sparse, prefer inverse
             if (str_detect(use_grm, "H.*inv.*nz")) {
@@ -395,7 +395,7 @@ generate_bici_script <- function(popn, params) {
 
             x$ie_g <- list(node = "ind-effect",
                            name = "gen",
-                           ie = ies_str)
+                           ie = IEs_str)
 
             message(str_glue("- using GRM = '{use_grm}'"))
 
@@ -452,12 +452,12 @@ generate_bici_script <- function(popn, params) {
             # Environmental effects
             x$ie_e <- list(node = "ind-effect",
                            name = "env",
-                           ie = str_replace_all(ies_str, "a|g", "e"))
+                           ie = str_replace_all(IEs_str, "a|g", "e"))
         }
 
         ## True BVs ----
         if (bici_cmd == "inf" && str_detect(dataset, "sim")) {
-            traits_to_fit <- model_traits[intersect(ies_used,
+            traits_to_fit <- model_traits[intersect(IEs_used,
                                                     str_chars(link_traits))]
             ie_names <- expand.grid(traits_to_fit, c("g", "e")) |>
                 apply(1, str_flatten, "_")
@@ -528,7 +528,7 @@ generate_bici_script <- function(popn, params) {
 
         get_IEs <- function(trait) {
             t1 <- str_1st(trait)
-            if (t1 %in% ies_used) {
+            if (t1 %in% IEs_used) {
                 iex <- get_LE(link_traits, t1)
                 str_glue("[{iex}g][{iex}e]")
             } else {
@@ -539,7 +539,8 @@ generate_bici_script <- function(popn, params) {
         if ("trans_inf" %in% names(x)) {
             x$trans_inf$value <- x$trans_inf$value |>
                 str_replace_all(c("GE_" = if (group_effect >= 0) "G_g*" else "",
-                                  "FEs_" = get_FEs("sus"), "IEs_" = get_IEs("sus"),
+                                  "FEs_" = get_FEs("sus"),
+                                  "IEs_" = get_IEs("sus"),
                                   "FEi_" = get_FEs("inf"),
                                   "IEi_" = get_IEs("inf")))
         }
@@ -694,7 +695,7 @@ generate_bici_script <- function(popn, params) {
         lp_types <- with(priors[str_ends(parameter, "[LDR]P"), .(parameter, type)],
                          setNames(type, parameter)) |> as.list()
 
-        if (ies %notin% c("", "none", NA)) {
+        if (IEs %notin% c("", "none", NA)) {
            if (!exists("cov_prior")) {
                 cov_prior <- list(type = "default", vals = c())
             }
@@ -713,7 +714,7 @@ generate_bici_script <- function(popn, params) {
             )
 
             # Possibly already defined, maybe not
-            traits_to_fit <- model_traits[intersect(ies_used,
+            traits_to_fit <- model_traits[intersect(IEs_used,
                                                     str_chars(link_traits))]
 
             XG <- Sigma_G[traits_to_fit, traits_to_fit] |> round(5)

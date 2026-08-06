@@ -10,7 +10,7 @@
 #' @param scenario Integer for scenario
 #' @param replicate Integer for replicate
 #' @param setup Population layout
-#' @param ies Which traits are affected by individual genetic effects, either in
+#' @param IEs Which traits are affected by individual genetic effects, either in
 #'   simulation or inference. This should correspond to the names of the model
 #'   traits used. Use a trait's first letter if used, or _ if unused. For linked
 #'   traits use the letter of the trait it's linked to. "", "all", or "none" are
@@ -31,7 +31,7 @@
 #'   "striped", "family", "fishboost"
 #' @param group_effect Include group effect if >= 0, simulate if appropriate and
 #'   check, ignore if < 0
-#' @param fes A list of Fixed Effect names. Values should correspond to the full
+#' @param FEs A list of Fixed Effect names. Values should correspond to the full
 #'   list of model traits they apply to, e.g. for an SEIR model with traits
 #'   "silt" use:
 #'   list(sex = "silt",   # all traits used
@@ -46,9 +46,9 @@
 
 make_parameters <- function(
         model_type = "SEIR", name = "scen-1-1", dataset = "testing",
-        scenario = 1L, replicate = 1L, setup = "fb_12_rpw", ies = "sit",
+        scenario = 1L, replicate = 1L, setup = "fb_12_rpw", IEs = "sit",
         vars = 1.0, cors = 0.2, group_layout = "fishboost", group_effect = -1,
-        fes = list(sex = "sit", age = "sit", weight = "sit"),
+        FEs = list(sex = "sit", age = "sit", weight = "sit"),
         sim_new_data = "r",
         protocol = NULL
 ) {
@@ -59,9 +59,9 @@ make_parameters <- function(
     # Handy in case of debugging
     if (FALSE) {
         model_type <- "SEIDR"; dataset <- "testing"; name <- "scen-1-1";
-        scenario <- 1L; replicate = 1L; setup <- "fb_12_rpw"; ies <- "sit";
+        scenario <- 1L; replicate = 1L; setup <- "fb_12_rpw"; IEs <- "sit";
         vars <- 1; cors <- 0.2; group_layout <- "fishboost"; group_effect <- -1;
-        fes <- list(trial = "ildt", donor = "ildt", txd = "ildt",
+        FEs <- list(trial = "ildt", donor = "ildt", txd = "ildt",
                     weight1 = "sildt", weight2 = "sildt");
         sim_new_data <- "r";
     }
@@ -70,7 +70,7 @@ make_parameters <- function(
     if (!is.null(protocol)) {
         message("- using Protocol for args")
         for (v in c("model_type", "dataset", "name", "scenario", "replicate",
-                    "setup", "ies", "vars", "cors", "group_layout",
+                    "setup", "IEs", "vars", "cors", "group_layout",
                     "group_effect", "trial_fe", "donor_fe", "txd_fe",
                     "weight_fe", "weight_is_nested", "sim_new_data,")) {
             if (v %in% names(protocol)) {
@@ -87,11 +87,11 @@ make_parameters <- function(
         scenario      <- scenario %||% 1L
         replicate     <- replicate %||% 1L
         setup         <- setup %||% "fb_12_rpw"
-        ies           <- ies %||% "si__t"
+        IEs           <- IEs %||% "si__t"
         vars          <- vars %||% 0
         cors          <- cors %||% 0
         group_layout  <- group_layout %||% "fishboost"
-        fes           <- fes %||% list()
+        FEs           <- FEs %||% list()
         sim_new_data  <- sim_new_data %||% "r"
     }
 
@@ -191,19 +191,19 @@ make_parameters <- function(
     ## Genetic and Environmental covariances ----
 
     # Likely using only a subset of traits
-    ies <- if (ies %in% c("", "none", NA)) {
+    IEs <- if (IEs %in% c("", "none", NA)) {
         strrep("_", length(model_traits))
-    } else if (ies == "all") {
+    } else if (IEs == "all") {
         model_traits |> names() |> str_flatten()
     } else {
-        str_to_lower(ies)
+        str_to_lower(IEs)
     }
 
-    ies_used <- ies |> str_chars() |>
+    IEs_used <- IEs |> str_chars() |>
         str_subset("_", negate = TRUE) |> str_flatten()
 
-    n_traits_used <- str_length(ies_used)
-    traits_used <- model_traits[str_chars(ies_used)]
+    n_traits_used <- str_length(IEs_used)
+    traits_used <- model_traits[str_chars(IEs_used)]
 
     if (n_traits_used > 0) {
         message("- ", n_traits_used, " genetic traits: ", str_flatten_comma(traits_used))
@@ -213,7 +213,7 @@ make_parameters <- function(
 
     ## Covariance matrices ----
 
-    out <- make_matrices(model_traits, ies_used, vars, cors)
+    out <- make_matrices(model_traits, IEs_used, vars, cors)
     Sigma_G <- Sigma_E <- out$Sigma
     cov_G <- cov_E <- out$cov
 
@@ -275,10 +275,10 @@ make_parameters <- function(
     ## Fixed effects ----
 
     # A default set of FEs
-    fe_vals <- matrix(0,
+    FE_vals <- matrix(0,
                       ncol = length(model_traits),
-                      nrow = length(fes),
-                      dimnames = list(fe = names(fes),
+                      nrow = length(FEs),
+                      dimnames = list(FE = names(FEs),
                                       traits = unname(model_traits)))
 
     ## R0 ----
@@ -370,11 +370,11 @@ make_parameters <- function(
 
     ## FE priors ----
 
-    fe_p <- expand.grid(t1, names(fes)) |> rev() |> apply(1, str_flatten, "_")
-    fe_priors <- data.table(parameter = fe_p, true_val = 0,
+    FE_p <- expand.grid(t1, names(FEs)) |> rev() |> apply(1, str_flatten, "_")
+    FE_priors <- data.table(parameter = FE_p, true_val = 0,
                             type = "uniform", val1 = -4, val2 = 4)
 
-    priors <- rbind(base_priors, bici_priors, cov_priors, fe_priors,
+    priors <- rbind(base_priors, bici_priors, cov_priors, FE_priors,
                     fill = TRUE)
 
     ## Tidy up ----
@@ -401,7 +401,7 @@ make_parameters <- function(
     priors[parameter %in% use_parameters, use := TRUE]
 
     GE_traits <- t1 |>
-        intersect(str_chars(ies_used))
+        intersect(str_chars(IEs_used))
 
     pwalk(expand.grid(x = t1, y = t1), \(x, y) {
         priors[str_ends(parameter, str_glue("_[GE]_{x}{y}")),
@@ -472,19 +472,19 @@ make_parameters <- function(
         # Inputs
         c("description", "dataset", "scenario", "name", "label", "replicate", "seed",
           "data_dir", "results_dir", "gfx_dir", "meta_dir", "output_dir", "states_dir", "config",
-          "model_type", "sim_new_data", "setup", "vars", "cors", "group_layout", "ies",
+          "model_type", "sim_new_data", "setup", "vars", "cors", "group_layout", "IEs",
           # Population parameters
           "nsires", "ndams", "nparents", "nprogeny", "ngroups", "ntotal",
           "dpsire", "ppdam", "group_size", "I0",
           # Model traits
-          "compartments", "timings", "all_traits", "model_traits", "fes",
+          "compartments", "timings", "all_traits", "model_traits", "FEs",
           "Sigma_E", "Sigma_G", "cov_G", "cov_E",
           # Main model parameters
           "r_beta", "inf_ratio", "inf_model", "group_effect", "R0", # infection
           "LP", "LP_shape", "LP_scale", "LP_dist", # latency
           "DP", "DP_shape", "DP_scale", "DP_dist", # detection
           "RP", "RP_shape", "RP_scale", "RP_dist", # removal
-          "fe_vals",
+          "FE_vals",
           # MCMC & extra
           "priors", "cov_prior", "single_prior",
           "popn_format", "bici_cmd", "algorithm",
@@ -530,8 +530,8 @@ summarise_params <- function(params) {
 
         message(str_glue(
             "- Individual Effects on:",
-            str_c("\t", if (ies %in% c("", "none")) "none" else
-                str_flatten_comma(model_traits[str_chars(ies)])),
+            str_c("\t", if (IEs %in% c("", "none")) "none" else
+                str_flatten_comma(model_traits[str_chars(IEs)])),
             .trim = FALSE, .sep = "\n"
         ))
 
@@ -543,7 +543,7 @@ summarise_params <- function(params) {
 
         message(str_glue(
             "- Fixed Effects are:",
-            str_c(names(fes), " = '", fes, "'") |> str_flatten_comma(),
+            str_c(names(FEs), " = '", FEs, "'") |> str_flatten_comma(),
             .trim = FALSE, .sep = "\n"
         ))
 

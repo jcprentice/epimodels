@@ -62,15 +62,15 @@ plot_ranks <- function(dataset = "sim-Gcov", scen = 1) {
         sires <- popn[sdp == "sire", .I]
 
         BV = data.table()
-        if (str_detect(params$ies, "s")) {
+        if (str_detect(params$IEs, "s")) {
             BV <- rbind(BV, cbind(popn[sires, .(id, variable = "sus", true = rank(sus_g))],
                                   estimated_BVs[sires, .(estimated = rank(sus))]))
         }
-        if (str_detect(params$ies, "i")) {
+        if (str_detect(params$IEs, "i")) {
             BV <- rbind(BV, cbind(popn[sires, .(id, variable = "inf", true = rank(inf_g))],
                                   estimated_BVs[sires, .(estimated = rank(inf))]))
         }
-        if (str_detect(params$ies, "t")) {
+        if (str_detect(params$IEs, "t")) {
             BV <- rbind(BV, cbind(popn[sires, .(id, variable = "tol", true = rank(tol_g))],
                                   estimated_BVs[sires, .(estimated = rank(tol))]))
         }

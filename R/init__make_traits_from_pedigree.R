@@ -7,11 +7,11 @@ make_traits_from_pedigree <- function(pedigree, params) {
     # Extract parameters
     {
         model_traits <- params$model_traits
-        ies          <- params$ies
-        traitnames   <- model_traits[intersect(str_chars(ies), names(model_traits))]
+        IEs          <- params$IEs
+        traitnames   <- model_traits[intersect(str_chars(IEs), names(model_traits))]
         cov_G        <- params$cov_G[traitnames, traitnames]
         cov_E        <- params$cov_E[traitnames, traitnames]
-        n_traits     <- str_length(ies)
+        n_traits     <- str_length(IEs)
         use_weight   <- params$use_weight
     }
 

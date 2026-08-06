@@ -9,7 +9,7 @@
 
 apply_links <- function(params) {
     {
-        ies              <- params$ies
+        IEs              <- params$IEs
         model_traits     <- params$model_traits
         sim_trial_fe     <- params$sim_trial_fe
         sim_donor_fe     <- params$sim_donor_fe
@@ -55,7 +55,7 @@ apply_links <- function(params) {
     get_idxs <- function(s) match(str_chars(s), t1)
 
     # Individual Effects ----
-    if (ies %notin% c("", "none", NA)) {
+    if (IEs %notin% c("", "none", NA)) {
         # Turn sim_link_traits into string vector
         new_idxs <- get_idxs(sim_link_traits)
 

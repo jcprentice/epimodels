@@ -14,7 +14,7 @@ make_traits_from_grm <- function(popn, params) {
         use_weight   <- params$use_weight
         use_grm      <- params$use_grm
         setup        <- params$setup
-        ies_used     <- params$ies |> uniq_chars() |>
+        IEs_used     <- params$IEs |> uniq_chars() |>
             str_subset("_", negate = TRUE)
     }
 
@@ -38,7 +38,7 @@ make_traits_from_grm <- function(popn, params) {
     # diag(cov_G) <- pmax(diag(cov_G), 1e-6)
     # diag(cov_E) <- pmax(diag(cov_E), 1e-6)
 
-    traits <- model_traits[ies_used]
+    traits <- model_traits[IEs_used]
     n_used_traits <- length(traits)
     unused_traits <- setdiff(model_traits, traits)
     traitnames_GV <- str_c(traits, "_g")

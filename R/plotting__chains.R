@@ -109,11 +109,11 @@ plot_chains <- function(dataset = "fb-test", scen = 1, rep = 1) {
         "sigma",  "beta_Tr2", "LP_Tr2,Don", "DP_Tr2,Don", "RP_Tr2,Don",
         "infrat", "empty",    "LP_Tr2,Rec", "DP_Tr2,Rec", "RP_Tr2,Rec")
 
-    fes <- expand.grid(sildt1,
+    FEs <- expand.grid(sildt1,
                        c("trial", "donor", "txd", "weight", "weight1", "weight2")) |>
         rev() |> apply(1, str_flatten, "_")
 
-    plt_names <- c(cov_pars, model_pars, fes)
+    plt_names <- c(cov_pars, model_pars, FEs)
 
     if ("beta_Tr1" %notin% pars) {
         idx <- str_which(plt_names, "sigma")[[1]]

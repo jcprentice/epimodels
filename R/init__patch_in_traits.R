@@ -50,7 +50,7 @@ patch_in_traits <- function(popn, params) {
     } else if (is.numeric(patch_state)) {
         f <- str_glue("{output_dir}/summary_inf.rds")
         if (file.exists(f)) {
-            ebvs <- readRDS(f)$ies[state == patch_state, map(.SD, mean), id, .SDcols = -1]
+            ebvs <- readRDS(f)$IEs[state == patch_state, map(.SD, mean), id, .SDcols = -1]
         } else {
             stop(str_glue("- '{f}' not found!"))
         }

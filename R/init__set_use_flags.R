@@ -2,12 +2,12 @@ set_use_flags <- function(params) {
     {
         all_traits    <- params$all_traits
         model_traits  <- params$model_traits
-        ies           <- params$ies
+        IEs           <- params$IEs
         setup         <- params$setup
         LP_dist       <- params$LP_dist
         DP_dist       <- params$DP_dist
         RP_dist       <- params$RP_dist
-        fes           <- params$fes
+        FEs           <- params$FEs
         setup         <- params$setup
         group_effect  <- params$group_effect
         # DTs are modified by reference, so this doesn't need to be copied back
@@ -21,7 +21,7 @@ set_use_flags <- function(params) {
     # Turn on base parameters
 
     # get letters for each trait
-    used <- intersect(names(model_traits), str_chars(ies))
+    used <- intersect(names(model_traits), str_chars(IEs))
 
     use_parameters <- c(
         "beta",
@@ -51,9 +51,9 @@ set_use_flags <- function(params) {
     })
 
     # Fixed effects
-    walk(names(fes), \(fe) {
-        fe_str <- str_c(fe, "_", uniq_chars(fes[[fe]]))
-        priors[parameter %in% fe_str, use := TRUE]
+    walk(names(FEs), \(FE) {
+        FE_str <- str_c(FE, "_", uniq_chars(FEs[[FE]]))
+        priors[parameter %in% FE_str, use := TRUE]
     })
 
 

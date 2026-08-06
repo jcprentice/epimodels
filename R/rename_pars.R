@@ -72,7 +72,7 @@ rename_pars <- function(pars) {
 sildt <- c("Susceptibility", "Infectivity", "Latency", "Detectability", "Tolerance")
 sildt1 <- sildt |> str_sub(1, 1) |> str_to_lower()
 
-fes <- expand.grid(sildt1,
+FEs <- expand.grid(sildt1,
                    c("trial", "donor", "txd", "weight", "weight1", "weight2")) |>
     rev() |> apply(1, str_flatten, "_")
 
@@ -89,7 +89,7 @@ param_order <- c(
     "cov_G_ss", "cov_G_ii",  "cov_G_tt", "r_G_si", "r_G_st", "r_G_it",
     "cov_E_ss", "cov_E_ii",  "cov_E_tt", "r_E_si", "r_E_st", "r_E_it",
     "cov_P_ss", "cov_P_ii",  "cov_P_tt", "h2_ss", "h2_ii", "h2_tt",
-    fes,
+    FEs,
     "MVPSF")
 
 full_param_order <- rename_pars(param_order)

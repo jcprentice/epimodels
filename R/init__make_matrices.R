@@ -5,7 +5,7 @@
 #' @param vars Variances. Either
 #' - A single value, e.g. `1`
 #' - A named list, e.g. `list(sus = 1, inf = 1.5, default = 0)`
-#' @param ies A string containing the first letters of traits with individual
+#' @param IEs A string containing the first letters of traits with individual
 #' genetic effects, e.g. "sit"
 #' @param cors Correlations. Either
 #' - A single value in (-1,1), e.g. `0.2`,
@@ -19,12 +19,12 @@
 #'                      cors = list(si = 0.3, st = 0.2, default = 0))
 
 make_matrices <- function(model_traits,
-                          ies_used = c("s", "i", "t"),
+                          IEs_used = c("s", "i", "t"),
                           vars = 1,
                           cors = 0.2) {
     if (FALSE) {
         model_traits <- c(s = "sus", i = "inf", l = "lat", d = "det", t = "tol")
-        ies_used <- c("s", "i", "t")
+        IEs_used <- c("s", "i", "t")
         vars <- params$vars; cors <- params$cors
         vars <- 1; cors <- 0.2
         vars <- list(sus = 1, inf = 1.5, tol = 0.5, default = 0.2)
@@ -72,7 +72,7 @@ make_matrices <- function(model_traits,
     }
 
     # Apply IEs (zero out unused traits)
-    unused_traits <- model_traits[setdiff(traits1, ies_used)]
+    unused_traits <- model_traits[setdiff(traits1, IEs_used)]
     for (i in unused_traits) {
         Sigma[i, ] <- 0
         Sigma[, i] <- 0

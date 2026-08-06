@@ -18,7 +18,7 @@ patch_params <- function(params, trace_row = 0) {
         patch_type    <- params$patch_type %||% "median"
         patch_state   <- params$patch_state %||% FALSE
         model_traits  <- params$model_traits
-        ies           <- params$ies
+        IEs           <- params$IEs
         skip_patches  <- params$skip_patches
         sim_new_data  <- params$sim_new_data
         msgs          <- params$msgs
@@ -178,7 +178,7 @@ patch_params <- function(params, trace_row = 0) {
     # We overwrite params2's Sigma_G and Sigma_E with new values, remembering
     # that r_*_** are correlations, not covariances, so they need to be
     # transformed first.
-    if ("ies" %notin% skip_patches) {
+    if ("IEs" %notin% skip_patches) {
         priors1 <- params2$priors$true_val |>
             setNames(params2$priors$parameter) |>
             as.list()
@@ -192,7 +192,7 @@ patch_params <- function(params, trace_row = 0) {
         out <- make_matrices_from_priors(priors1)
 
         # Copy the used values, discarding the rest (even if non-zero)
-        used <- model_traits[str_chars(ies)]
+        used <- model_traits[str_chars(IEs)]
 
         params2$Sigma_G[used, used] <- out$Sigma_G[used, used]
         params2$Sigma_E[used, used] <- out$Sigma_E[used, used]
@@ -254,8 +254,8 @@ patch_params <- function(params, trace_row = 0) {
     weight_is_nested <- any(str_detect(names(patch_vals), "weight1"))
     weight <- if (weight_is_nested) c("weight1", "weight2") else "weight"
 
-    fe_types <- c(
-        if ("fes" %notin% skip_patches) c("trial", "donor", "txd"),
+    FE_types <- c(
+        if ("FEs" %notin% skip_patches) c("trial", "donor", "txd"),
         if ("weight" %notin% skip_patches) weight
     )
 
@@ -263,13 +263,13 @@ patch_params <- function(params, trace_row = 0) {
         params2$priors[str_starts(parameter, "weight_"), use := FALSE]
     }
 
-    for (fe_type in fe_types) {
-        for (fe_trait in model_traits) {
+    for (FE_type in FE_types) {
+        for (FE_trait in model_traits) {
             # build name e.g. trial_l
-            fe_name <- str_c(fe_type, "_", str_sub(fe_trait, 1, 1))
-            if (fe_name %in% pp) {
-                params2$fe_vals[fe_type, fe_trait] <- patch_vals[[fe_name]]
-                pars_patched <- c(pars_patched, fe_name)
+            FE_name <- str_c(FE_type, "_", str_sub(FE_trait, 1, 1))
+            if (FE_name %in% pp) {
+                params2$FE_vals[FE_type, FE_trait] <- patch_vals[[FE_name]]
+                pars_patched <- c(pars_patched, FE_name)
             }
         }
     }
@@ -285,10 +285,10 @@ patch_params <- function(params, trace_row = 0) {
             # FIXME: this seems to be breaking, so just skip it
 
             # Ensure FEs match
-            for (fe in fe_types) {
-                fe_type <- str_c(fe, "_fe")
-                if (fe_type %in% names(tmp_params)) {
-                    params2[[fe_type]] <- tmp_params[[fe_type]]
+            for (FE in FE_types) {
+                FE_type <- str_c(FE, "_fe")
+                if (FE_type %in% names(tmp_params)) {
+                    params2[[FE_type]] <- tmp_params[[FE_type]]
                 }
             }
             pars_patched <- c(pars_patched, "fixed effects")
