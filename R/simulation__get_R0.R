@@ -9,7 +9,7 @@
 #' @export
 
 get_R0 <- function(popn) {
-    x <- table(popn$generation)
+    x <- popn[sdp == "progeny", map_int(generation, first) |> table()]
 
     R0 <- if (length(x) > 1) x[[2]] / x[[1]] else 0
 
