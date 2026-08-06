@@ -12,21 +12,35 @@ model_SIS <- function(popn, params) {
 
     # copy necessary parameters
     r_beta <- params$r_beta
-    tmax   <- params$tmax
+    t_end  <- params$t_end
     DEBUG  <- params$DEBUG
 
     # initialise population ----
     X <- init_popn(popn, params)
 
+    # This is essential for appending to the list
+    nax <- function(x, y) if (is.na(last(x))) y else c(x, y)
+
+    # This is unique to the SIS and SIRS models
+    Tinf <- copy(X$Tinf)
+    Tdeath <- copy(X$Tdeath)
+    X[, `:=`(Tinf = vector("list", .N),
+             Tdeath = vector("list", .N))]
+
+    walk(seq_len(nrow(X)), \(i) {
+        set(X, i, c("Tinf", "Tdeath"),
+            list(Tinf[[i]], Tdeath[[i]]))
+    })
+
     # This is a priority queue for the next event
-    ni_events <- X[, .(.I, Tdeath)] |>
+    ni_events <- X[, .(.I, map_dbl(Tdeath, last))] |>
         melt(id.vars = "I", variable.name = "event", value.name = "time") |>
         setorder(time, na.last = TRUE)
     ni_events[, event := NULL]
 
     # Start epidemic simulation loop
     epi_time <- 0.0
-    while (epi_time < tmax && X[, sum(status == "I") > 0] > 0L) {
+    while (epi_time < t_end && X[, sum(status == "I") > 0L]) {
         if (DEBUG) message("time = ", signif(epi_time, 5))
 
         # Calculate infection rates in each group
@@ -37,11 +51,11 @@ model_SIS <- function(popn, params) {
         X[, inf_rate := sus * group_inf * (status == "S")]
 
         # id and time of next non-infection event
-            t_next_event  <- ni_events$time[[1]]
-            id_next_event <- ni_events$I[[1]]
+        t_next_event  <- ni_events$time[[1]]
+        id_next_event <- ni_events$I[[1]]
 
         if (DEBUG) message("Next NI event id = ", id_next_event,
-            " at t = ", t_next_event)
+                           " at t = ", t_next_event)
 
 
         # generate random timestep ----
@@ -63,18 +77,26 @@ model_SIS <- function(popn, params) {
                                     prob = X$inf_rate)
 
             group_id <- X$group[id_next_event]
-            infectives <- X[, .(id, group, status, inf, generation)][group == group_id & status == "I"]
+            infectives <- X[group == group_id & status == "I",
+                            .(id, group, status, inf, generation)]
             infd_by <- safe_sample(x = infectives$id,
                                    size = 1L,
                                    prob = infectives$inf)
             next_gen <- infectives[id == infd_by, generation + 1L]
+            cur_gen <- X$generation[[id_next_event]]
 
             sis_path <- generate_sis_path(epi_time, X, id_next_event, params)
-            set(X, id_next_event, c("status", "Tinf", "Tdeath"), sis_path)
 
-            ni_events[I == id_next_event, time := as.numeric(sis_path[-(1:2)])]
+            set(X, id_next_event,
+                c("status", "Tinf", "Tdeath", "generation", "infected_by"),
+                list("I",
+                     nax(X$Tinf[[id_next_event]], sis_path$Tinf),
+                     nax(X$Tdeath[[id_next_event]], sis_path$Tdeath),
+                     if (is.na(cur_gen)) next_gen else cur_gen,
+                     infd_by))
 
-            set(X, id_next_event, c("generation", "infected_by"), list(next_gen, infd_by))
+
+            ni_events[I == id_next_event, time := sis_path$Tdeath]
 
             if (DEBUG) message("ID ", id_next_event, ": S -> I, infected by ID ", infd_by)
         } else {
@@ -129,6 +151,6 @@ generate_sis_path <- function(epi_time, X, id, params) {
         Tinf   <- epi_time
         Tdeath <- Tinf + rgamma(1L, RP_shape, scale = RP_scale * X$tol[[id]])
 
-        list("I", Tinf, Tdeath)
+        list(status = "I", Tinf = Tinf, Tdeath = Tdeath)
     })
 }
