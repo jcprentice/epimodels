@@ -52,9 +52,9 @@ plot_km_sire_trial <- function(data_list, plotopts = NULL) {
     if ("t1" %in% plotopts) data <- data[trial == 1]
     if ("t2" %in% plotopts) data <- data[trial == 2]
 
-    # If Tsym is missing but Tdeath is not, then let Tsym = Tdeath
-    data[, `:=`(Tsym = fifelse(is.na(Tsym) & !is.na(Tdeath), Tdeath, Tsym),
-                RP   = Tdeath - Tsym)]
+    # If Tsign is missing but Tdeath is not, then let Tsign = Tdeath
+    data[, `:=`(Tsign = fifelse(is.na(Tsign) & !is.na(Tdeath), Tdeath, Tsign),
+                RP    = Tdeath - Tsign)]
 
     if ("drop_donors" %in% plotopts) {
         data <- data[donor == 0]
@@ -64,9 +64,9 @@ plot_km_sire_trial <- function(data_list, plotopts = NULL) {
     # sure to include NA values last
     data_t0 <- data[!is.na(sire),
                     .(donor = fifelse(any(donor == 1), 1, 0),
-                      Tinf = c(0, sort(Tinf, na.last = TRUE)),
-                      Tsym = c(0, sort(Tsym, na.last = TRUE)),
-                      RP   = c(0, sort(RP,   na.last = TRUE)),
+                      Tinf  = c(0, sort(Tinf,  na.last = TRUE)),
+                      Tsign = c(0, sort(Tsign, na.last = TRUE)),
+                      RP    = c(0, sort(RP,    na.last = TRUE)),
                       src = src[c(1, 1:.N)]),
                     .(id, sire, trial)] |>
         setorder(id, sire, trial)
@@ -86,12 +86,12 @@ plot_km_sire_trial <- function(data_list, plotopts = NULL) {
     }
 
     if ("extreme_sires" %in% plotopts) {
-       foo <- data_t0[id == last(id), .(sire, trial, Tsym)]
+       foo <- data_t0[id == last(id), .(sire, trial, Tsign)]
        # Filter out any sires with fewer than 5 non-NA values
-       foo[, p := .N - sum(is.na(Tsym)), .(sire, trial)]
+       foo[, p := .N - sum(is.na(Tsign)), .(sire, trial)]
        foo <- foo[p > 5]
-       foo[is.na(Tsym), Tsym := tmax[trial]]
-       foo1 <- foo[, .(mu = mean(Tsym, na.rm = TRUE)), .(sire, trial)] |>
+       foo[is.na(Tsign), Tsign := tmax[trial]]
+       foo1 <- foo[, .(mu = mean(Tsign, na.rm = TRUE)), .(sire, trial)] |>
            setorder(trial, sire, mu)
        foo1[, donor := fifelse(sire %in% unlist(donor_sires), 1L, 0L)]
        ids <- foo1[, .(sire = sire[c(which.min(mu), which.max(mu))],
@@ -102,24 +102,24 @@ plot_km_sire_trial <- function(data_list, plotopts = NULL) {
     }
 
     # Melt so we can use facet_wrap
-    data_t1 <- melt(data_t0, measure.vars = c("Tinf", "Tsym", "RP"))
+    data_t1 <- melt(data_t0, measure.vars = c("Tinf", "Tsign", "RP"))
 
     # Drop the really high values
     # data_t1[, value := fifelse(value > c(104, 160)[trial], NA, value)]
     # data_t1[(trial == 1 & value >= 104) | (trial == 2 & value >= 160), value := NA]
-    # maxvals <- data[, ceiling(max(c(Tsym, Tdeath), na.rm = TRUE)), trial][, V1]
+    # maxvals <- data[, ceiling(max(c(Tsign, Tdeath), na.rm = TRUE)), trial][, V1]
     maxvals <- c(104, 160)
     data_t1[, value := fifelse(value >= maxvals[trial], maxvals[trial], value)]
 
     # we might want to get a subset of the best and worst sires in each trial
     # if ("extremes" %in% plotopts) {
-    #     sires1 <- (data_t1[str_starts(src, "fb1") & variable == "Tsym" & !is.na(value),
+    #     sires1 <- (data_t1[str_starts(src, "fb1") & variable == "Tsign" & !is.na(value),
     #                        .(survival = survival[.N]), sire]
     #                [, .(sire_min = sire[which.min(survival)],
     #                     sire_max = sire[which.max(survival)])]
     #                [, c(sire_min, sire_max) |> sort()])
     #
-    #     sires2 <- (data_t1[str_starts(src, "fb2") & variable == "Tsym" & !is.na(value),
+    #     sires2 <- (data_t1[str_starts(src, "fb2") & variable == "Tsign" & !is.na(value),
     #                        .(survival = survival[.N]), sire]
     #                [, .(sire_min = sire[which.min(survival)],
     #                     sire_max = sire[which.max(survival)])]
@@ -180,9 +180,9 @@ plot_km_sire_trial <- function(data_list, plotopts = NULL) {
                    rows = vars(trial),
                    scales = "free_x",
                    labeller = labeller(
-                       variable = c(Tinf = "Proportion of family uninfected vs time",
-                                    Tsym = "Proportion of family with no symptoms vs time",
-                                    RP   = "Proportion of family surviving vs time"),
+                       variable = c(Tinf  = "Proportion of family uninfected vs time",
+                                    Tsign = "Proportion of family with no visual signs vs time",
+                                    RP    = "Proportion of family surviving vs time"),
                        trial = c("1" = "Trial 1",
                                  "2" = "Trial 2"))) +
         theme_bw() +
@@ -203,9 +203,9 @@ plot_km_sire_trial <- function(data_list, plotopts = NULL) {
     #     facet_wrap(. ~ variable,
     #                scales = "free_x",
     #                labeller = labeller(
-    #                    variable = c(Tinf = "Proportion of family uninfected vs time",
-    #                                 Tsym = "Proportion of family with no symptoms vs time",
-    #                                 RP   = "Proportion of family surviving vs time")))
+    #                    variable = c(Tinf  = "Proportion of family uninfected vs time",
+    #                                 Tsign = "Proportion of family with no visual signs vs time",
+    #                                 RP    = "Proportion of family surviving vs time")))
     #
     # plt2
 

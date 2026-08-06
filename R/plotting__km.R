@@ -8,23 +8,23 @@ plot_km <- function() {
         sdp == "progeny", .(trial = factor(trial),
                             # this ensures groups are properly separated
                             group = factor(sprintf("%02d_%02d", trial, sire)),
-                            Tsym,
-                            RP = Tdeath - Tsym)] |>
-        melt(measure.vars = c("Tsym", "RP"),
+                            Tsign,
+                            RP = Tdeath - Tsign)] |>
+        melt(measure.vars = c("Tsign", "RP"),
              variable.name = "var",
              value.name = "time") |>
         setorder(group)
-    
+
     tmax <- c(104, 160)
     x[, time := fifelse(time >= tmax[trial], 161, time, NA)]
-    
+
     y <- x[, .(time = c(0, sort(time, na.last = TRUE)), N = .N),
            by = .(trial, group, var)]
-    
+
     y[, survival := seq(1, 0, length.out = .N),
       by = .(var, trial, group)]
-    
-    
+
+
     plt <- ggplot(data = y,
                   aes(x = time,
                       y = survival,
@@ -43,14 +43,14 @@ plot_km <- function() {
         facet_wrap(. ~ var,
                    nrow = 1,
                    labeller = labeller(
-                       var = c(Tsym = "Proportion of family with no symptoms vs time",
-                               RP   = "Proportion of family surviving vs time"))) +
+                       var = c(Tsign = "Proportion of family with no visual signs vs time",
+                               RP    = "Proportion of family surviving vs time"))) +
         theme_bw() +
         easy_all_text_size(16) +
         theme(panel.background = element_blank(),
               legend.position = "bottom")
     plt
-    
+
     ggsave("gfx/km_plots2.png",
            plt, width = 12, height = 6)
 

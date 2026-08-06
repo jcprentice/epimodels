@@ -39,13 +39,13 @@ plot_km_donor_trial <- function(data_list, plotopts = NULL) {
         data[src == "fb", Tinf2 := fb_Tinfs$Tinf[seq(1 + N2 - N1, N2)]]
     }
 
-    # If Tsym is missing but Tdeath is not, then let Tsym = Tdeath
-    data[, Tsym2 := fifelse(is.na(Tsym) & !is.na(Tdeath), Tdeath, Tsym)]
+    # If Tsign is missing but Tdeath is not, then let Tsign = Tdeath
+    data[, Tsign2 := fifelse(is.na(Tsign) & !is.na(Tdeath), Tdeath, Tsign)]
 
     # Make a copy of the data and add in rows representing t=0, sort times
-    data_t0 <- data[, .(Tinf = c(0, sort(Tinf,  na.last = TRUE)),
-                        Tsym = c(0, sort(Tsym2, na.last = TRUE)),
-                        RP   = c(0, sort(RP,    na.last = TRUE)),
+    data_t0 <- data[, .(Tinf  = c(0, sort(Tinf,  na.last = TRUE)),
+                        Tsign = c(0, sort(Tsign2, na.last = TRUE)),
+                        RP    = c(0, sort(RP,    na.last = TRUE)),
                         src = src[c(1, 1:.N)]),
                     .(id, donor, trial)]
 
@@ -67,15 +67,15 @@ plot_km_donor_trial <- function(data_list, plotopts = NULL) {
 
     # Melt so we can use facet_wrap
     data_t1 <- melt(data_t0,
-                    measure.vars = c("Tinf", "Tsym", "RP"))
+                    measure.vars = c("Tinf", "Tsign", "RP"))
 
     if ("show_Tinfs" %notin% plotopts) {
         data_t1 <- data_t1[variable != "Tinf"]
     }
 
     # Drop the really high values
-    # data_t1[variable == "Tsym" & value > 200, value := NA]
-    # data_t1[variable == "RP"   & value > 160, value := NA]
+    # data_t1[variable == "Tsign" & value > 200, value := NA]
+    # data_t1[variable == "RP"    & value > 160, value := NA]
     # data_t1[value > 160, value := NA]
     # data_t1[(trial == 1 & value >= 104) | (trial == 2 & value >= 160), value := NA]
     maxvals <- c(104, 160)
@@ -112,9 +112,9 @@ plot_km_donor_trial <- function(data_list, plotopts = NULL) {
                    rows = vars(trial),
                    scales = "free_x",
                    labeller = labeller(
-                       variable = c(Tinf = "Proportion of family uninfected vs time",
-                                    Tsym = "Proportion of family with no symptoms vs time",
-                                    RP   = "Proportion of family surviving vs time"),
+                       variable = c(Tinf  = "Proportion of family uninfected vs time",
+                                    Tsign = "Proportion of family with no visual signs vs time",
+                                    RP    = "Proportion of family surviving vs time"),
                        trial = c("1" = "Trial 1",
                                  "2" = "Trial 2")))
     plt
@@ -130,9 +130,9 @@ plot_km_donor_trial <- function(data_list, plotopts = NULL) {
     #     facet_wrap(. ~ variable,
     #                scales = "free_x",
     #                labeller = labeller(
-    #                    variable = c(Tsym = "Proportion of family uninfected vs time",
-    #                                 Tsym = "Proportion of family with no symptoms vs time",
-    #                                 RP   = "Proportion of family surviving vs time")))
+    #                    variable = c(Tsign = "Proportion of family uninfected vs time",
+    #                                 Tsign = "Proportion of family with no visual signs vs time",
+    #                                 RP    = "Proportion of family surviving vs time")))
     #
     # ggsave(str_glue("{gfx_dir}/{dataset}-s{scen}-KM_grid.pdf"),
     #        plot = plt2, width = 12, height = 6)
