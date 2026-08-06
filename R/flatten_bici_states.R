@@ -162,18 +162,18 @@ flatten_bici_states <- function(dataset = "fb-test",
                 events <- str_split_1(event, " ")
                 switch(params$model_type,
                        "SEIDR" = {
-                           set(transitions, j, c("Tinf", "Tinc", "Tsym", "Tdeath"),
+                           set(transitions, j, c("Tinf", "Tinc", "Tsign", "Tdeath"),
                                list(Tinf = get_event(events, "S->E"),
                                     Tinc = get_event(events, "E->I"),
-                                    Tsym = get_event(events, "I->D"),
+                                    Tsign = get_event(events, "I->D"),
                                     Tdeath = get_event(events, "D->R")))
                        }, "SIDR" = {
-                           set(transitions, j, c("Tinf", "Tsym", "Tdeath"),
+                           set(transitions, j, c("Tinf", "Tsign", "Tdeath"),
                                list(Tinf = get_event(events, "S->I"),
-                                    Tsym = get_event(events, "I->D"),
+                                    Tsign = get_event(events, "I->D"),
                                     Tdeath = get_event(events, "D->R")))
                        }, "SEIR" = {
-                           set(transitions, j, c("Tinf", "Tsym", "Tdeath"),
+                           set(transitions, j, c("Tinf", "Tsign", "Tdeath"),
                                list(Tinf = get_event(events, "S->E"),
                                     Tinc = get_event(events, "E->I"),
                                     Tdeath = get_event(events, "I->R")))
@@ -188,7 +188,7 @@ flatten_bici_states <- function(dataset = "fb-test",
             popn <- merge(base_popn, transitions, by = "id", all = TRUE)
 
 
-            if (params$use_traits %notin% c("none", "")) {
+            if (params$ies %notin% c("none", "")) {
                 i_lines <- get_section(lines1, headers, "INDIVIDUALS") |>
                     str_squish() |>
                     str_subset(".+")
