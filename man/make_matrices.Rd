@@ -4,17 +4,10 @@
 \alias{make_matrices}
 \title{Construct cov_mat and Sigma matrices using var and cor components}
 \usage{
-make_matrices(
-  model_traits = c("sus", "inf", "lat", "det", "tol"),
-  use_traits = "sildt",
-  vars = 1,
-  cors = 0.2
-)
+make_matrices(model_traits, ies_used = c("s", "i", "t"), vars = 1, cors = 0.2)
 }
 \arguments{
 \item{model_traits}{A character vector of traits, e.g. \verb{c("sus", "inf", "tol)}}
-
-\item{use_traits}{A string with the first letter of each trait being used, e.g. \code{sit}}
 
 \item{vars}{Variances. Either
 \itemize{
@@ -27,6 +20,9 @@ make_matrices(
 \item A single value in (-1,1), e.g. \code{0.2},
 \item a named list e.g. \code{list(si = 0.3, st = -0.2, default = 0)}
 }}
+
+\item{ies}{A string containing the first letters of traits with individual
+genetic effects, e.g. "sit"}
 }
 \value{
 A list containing Sigma matrices (for BICI) and covariance matrices (for R)
