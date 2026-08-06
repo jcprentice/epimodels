@@ -77,7 +77,7 @@ model_SIR <- function(popn, params) {
 
                 set(X, id_next_event,
                     c("status", "Tinf", "Tdeath", "generation", "infected_by"),
-                    c("I", epi_time, sir_path, next_gen, infd_by))
+                    c("I", epi_time, as.list(sir_path), next_gen, infd_by))
 
                 ni_events[I == id_next_event, time := sir_path]
 
