@@ -8,24 +8,24 @@
 #' @returns A KM plot
 
 basic_km <- function(popn, params) {
-    cols <- intersect(c("sire", "trial", "Tinf", "Tsym", "Tdeath"),
+    cols <- intersect(c("sire", "trial", "Tinf", "Tsign", "Tdeath"),
                       names(popn))
 
     x <- popn[sdp == "progeny", ..cols]
 
-    if ("Tsym" %notin% names(x)) {
-        x[, Tsym := Tinf]
+    if ("Tsign" %notin% names(x)) {
+        x[, Tsign := Tinf]
     }
 
-    x[, RP := Tdeath - Tsym]
+    x[, RP := Tdeath - Tsign]
 
-    x1 <- x[, .(Tsym = c(0, sort(Tsym, na.last = TRUE)),
-                RP   = c(0, sort(RP,   na.last = TRUE))),
+    x1 <- x[, .(Tsign = c(0, sort(Tsign, na.last = TRUE)),
+                RP    = c(0, sort(RP,    na.last = TRUE))),
             .(sire, trial)]
     x1[, grp := .GRP, .(sire, trial)]
     x1[, survival := seq(1, 0, length.out = .N), grp]
 
-    x2 <- melt(x1, measure.vars = c("Tsym", "RP"),
+    x2 <- melt(x1, measure.vars = c("Tsign", "RP"),
                value.name = "time")
 
     plt <- ggplot(x2, aes(x = time, y = survival, group = grp)) +
@@ -36,9 +36,9 @@ basic_km <- function(popn, params) {
                    cols = vars(variable),
                    scales = "free_x",
                    labeller = labeller(
-                       variable = c(Tinf = "Proportion of family uninfected vs time",
-                                    Tsym = "Proportion of family with no symptoms vs time",
-                                    RP   = "Proportion of family surviving vs time"),
+                       variable = c(Tinf  = "Proportion of family uninfected vs time",
+                                    Tsign = "Proportion of family with no visual signs vs time",
+                                    RP    = "Proportion of family surviving vs time"),
                        trial = c("1" = "Trial 1",
                                  "2" = "Trial 2"))) +
         theme_bw()
