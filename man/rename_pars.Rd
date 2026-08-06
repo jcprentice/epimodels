@@ -16,7 +16,7 @@ A new character vector of modified parameter names
 Turns the short name parameters into something suitable for printing, e.g.
 \itemize{
 \item "cov_G_ss" -> "Var G (sus)"
-\item "latent_period" -> "Latent Period (days)"
+\item "LP" -> "Latent Period (days)"
 \item "trial_i" -> "Trial Infectivity"
 }
 }
