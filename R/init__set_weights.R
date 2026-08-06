@@ -2,25 +2,24 @@ set_weights <- function(popn, params) {
     if ("weight" %in% names(popn)) {
         return(popn)
     }
-    
+
     # If weights aren't assigned, assign new ones. We're unlikely to ever use
     # this, but it's there if we need it.
-    
+
     weight_type <- params$weight_type %||% "none"
-    
+
     popn[, weight := 50]
     setcolorder(popn, "weight", after = "group")
-    
+
+    fb <- readRDS("fb_data/fb_12_rpw.rds")
+
     if (weight_type == "fb") {
-        fb <- readRDS("fb_data/fb_12_rpw.rds")
         popn[trial == 1, weight := sample(fb[trial == 1, weight], .N, replace = TRUE)]
         popn[trial == 2, weight := sample(fb[trial == 2, weight], .N, replace = TRUE)]
     } else if (weight_type == "random") {
-        # Generate a truncated log-normal distribution
-        fb <- readRDS("fb_data/fb_12_rpw.rds")
-        
+        # Generate a truncated log-normal distribution and sample from that
         trials <- popn[sdp == "progeny", unique(trial)]
-        
+
         walk(trials, \(tr) {
             fit <- fb[trial == tr, MASS::fitdistr(weight, "log-normal")]
             rng <- fb[trial == tr, range(weight)]
@@ -32,8 +31,9 @@ set_weights <- function(popn, params) {
                                                 fit$estimate[[2]]))]
         })
     } else {
-        # Just leave as is
+        # Just set to something vaguely feasible
+        popn[sdp == "progeny", weight := 50]
     }
-    
+
     popn
 }
