@@ -1,17 +1,7 @@
-# Spearman's rank correlation
-spearmans_rc <- function(x, y) {
-    rx <- rank(x)
-    ry <- rank(y)
-    n <- length(x)
-    1 - 6 * sum((rx - ry)^2) / (n * (n^2 - 1))
-}
-
-
 # Return EBVs ranked, show rank distance vs true ranks
 get_ranks <- function(popn, estimated_BVs, params, verbose = FALSE) {
-    {
-        use_traits   <- params$use_traits
-    }
+
+    ies_used <- params$ies |> uniq_chars() |> str_remove_all("_")
 
     # make a copy of this so we can add missing columns
     popn2 <- copy(popn)
@@ -23,15 +13,15 @@ get_ranks <- function(popn, estimated_BVs, params, verbose = FALSE) {
     setnames(estimated_BVs, ie_names, c("sus", "inf", "tol"), skip_absent = TRUE)
 
     # add missing columns
-    if (!str_detect(use_traits, "s")) {
+    if ("s" %notin% ies_used) {
         estimated_BVs[, sus := 0]
         popn2[, sus_g := 0]
     }
-    if (!str_detect(use_traits, "i")) {
+    if ("i" %notin% ies_used) {
         estimated_BVs[, inf := 0]
         popn2[, inf_g := 0]
     }
-    if (!str_detect(use_traits, "t")) {
+    if ("t" %notin% ies_used) {
         estimated_BVs[, tol := 0]
         popn2[, tol_g := 0]
     }
