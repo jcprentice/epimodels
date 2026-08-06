@@ -71,10 +71,10 @@ model_SIS <- function(popn, params) {
                                     prob = X$inf_rate)
 
             group_id <- X$group[id_next_event]
-            infectives <- X[group == group_id & status == "I",
-                            .(id, group, status, inf, generation)]
-            infd_by <- infectives[, safe_sample(id, 1L, prob = inf)]
-            next_gen <- infectives[id == infd_by, last(unlist(generation)) + 1L]
+            xi <- X[, sample(.N, 1L,
+                             prob = inf * (status == "I" & group == group_id))]
+            infd_by <- X$id[[xi]]
+            next_gen <- X$generation[[xi]] + 1L
 
             sis_path <- generate_sis_path(epi_time, X, id_next_event, params)
 
