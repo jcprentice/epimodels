@@ -17,5 +17,5 @@ A new population file with FEs applied to phenotypes
 \description{
 \code{apply_fixed_effects()} takes a population data.table and a
 parameters list and applies all the fixed effects defined by \code{sim_X_fe}
-according to the FE values contained in \code{fe_vals}.
+according to the FE values contained in \code{FE_vals}.
 }
