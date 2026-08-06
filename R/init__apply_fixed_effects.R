@@ -1,6 +1,3 @@
-library(data.table)
-library(stringr)
-
 #' Apply trial, donor, and weight FEs to popn.
 #'
 #' @description `apply_fixed_effects()` takes a population data.table and a
@@ -19,6 +16,7 @@ apply_fixed_effects <- function(popn, params) {
         sim_donor_fe     <- params$sim_donor_fe
         sim_txd_fe       <- params$sim_txd_fe
         sim_weight_fe    <- params$sim_weight_fe
+        fes              <- params$fes
         fe_vals          <- params$fe_vals
         use_weight       <- params$use_weight
         weight_is_nested <- params$weight_is_nested
@@ -36,38 +34,26 @@ apply_fixed_effects <- function(popn, params) {
                             names(popn2))
     popn2[, (missing_GEVs) := 0]
 
-    # Choose how to recentre the weights, log (default) or linear
-    recentre_f <- get(if (use_weight == "log") "log_recentre" else "recentre")
+    mat <- matrix(0,
+                  nrow = popn2[sdp == "progeny", .N],
+                  ncol = length(params$fes),
+                  dimnames = list(NULL, names(params$fes)))
 
-    N1 <- popn2[trial == 1, .N]
-    N2 <- popn2[trial == 2, .N]
-
-    mat <- popn2[sdp == "progeny",
-                 .(trial = recentre(trial == 2),
-                   donor = recentre(donor == 1),
-                   txd   = recentre(trial == 2 & donor == 1),
-                   weight  = recentre_f(weight),
-                   weight1 = c(recentre_f(weight[trial == 1]), rep(0, N2)),
-                   weight2 = c(rep(0, N1), recentre_f(weight[trial == 2]))
-                 )] |>
-        as.matrix()
-
-    sildt <- colnames(fe_vals) |> str_1st()
-
-    # Zero out all fe_vals that aren't in sim_X_fe
-    fe_vals["trial",   sildt %notin% str_chars(sim_trial_fe)]  <- 0
-    fe_vals["donor",   sildt %notin% str_chars(sim_donor_fe)]  <- 0
-    fe_vals["txd",     sildt %notin% str_chars(sim_txd_fe)]    <- 0
-    fe_vals["weight",  sildt %notin% str_chars(sim_weight_fe)] <- 0
-    fe_vals["weight1", sildt %notin% str_chars(sim_weight_fe)] <- 0
-    fe_vals["weight2", sildt %notin% str_chars(sim_weight_fe)] <- 0
-
-    if (weight_is_nested) {
-        fe_vals["weight", ] <- 0
-    } else {
-        fe_vals[c("weight1", "weight2"), ] <- 0
-    }
-
+    walk(names(fes), \(fe) {
+        mat[, fe] <<- if (weight_is_nested && str_detect(fe, "weight")) {
+            tr <- fe |> str_extract("\\d+") |> as.integer()
+            popn2[sdp == "progeny", recentre(log(weight)), trial] |>
+                _[, fifelse(trial == tr, V1, 0)]
+        } else if (str_detect(fe, "weight")) {
+            popn2[sdp == "progeny", recentre(log(weight))]
+        } else if (str_detect(fe, "trial")) {
+            popn2[sdp == "progeny", recentre(trial == 2L)]
+        } else if (str_detect(fe, "donor")) {
+            popn2[sdp == "progeny", recentre(donor == 1L)]
+        } else if (str_detect(fe, "txd")) {
+            popn2[sdp == "progeny", recentre(trial == 2L & donor == 1L)]
+        }
+    })
 
     mat_fe <- mat %*% fe_vals[, model_traits]
 
