@@ -76,7 +76,7 @@ model_SIDR <- function(popn, params) {
                 sidr_path <- generate_sidr_path(epi_time, X, id_next_event, params)
 
                 set(X, id_next_event,
-                    c("status", "Tinf", "Tsign", "Tdeath"),
+                    c("status", "Tinf", "Tsign", "Tdeath", "generation", "infected_by"),
                     c("I", epi_time, as.list(sidr_path), next_gen, infd_by))
 
                 ni_events[I == id_next_event, time := sidr_path]
