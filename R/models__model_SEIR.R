@@ -67,16 +67,16 @@ model_SEIR <- function(popn, params) {
                                         size = 1L,
                                         prob = X$inf_rate)
 
-                infectives <- X[status == "I", .(id, status, inf, generation)]
-                infd_by <- safe_sample(x = infectives$id,
-                                       size = 1L,
-                                       prob = infectives$inf)
-                next_gen <- infectives[id == infd_by, generation + 1L]
+                xi <- X[, sample(x = .N,
+                                 size = 1L,
+                                 prob = inf * (status == "I"))]
+                infd_by <- X$id[[xi]]
+                next_gen <- X$generation[[xi]] + 1L
 
                 seir_path <- generate_seir_path(epi_time, X, id_next_event, params)
 
                 set(X, id_next_event,
-                    c("status", "Tinf", "Tsign", "Tdeath"),
+                    c("status", "Tinf", "Tsign", "Tdeath", "generation", "infected_by"),
                     c("E", epi_time, as.list(seir_path), next_gen, infd_by))
 
                 ni_events[I == id_next_event, time := seir_path]
