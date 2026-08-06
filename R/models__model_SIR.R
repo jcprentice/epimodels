@@ -67,11 +67,11 @@ model_SIR <- function(popn, params) {
                                         size = 1L,
                                         prob = X$inf_rate)
 
-                infectives <- X[status == "I", .(id, status, inf, generation)]
-                infd_by <- safe_sample(x = infectives$id,
-                                       size = 1L,
-                                       prob = infectives$inf)
-                next_gen <- infectives[id == infd_by, generation + 1L]
+                xi <- X[, sample(x = .N,
+                                 size = 1L,
+                                 prob = inf * (status == "I"))]
+                infd_by <- X$id[[xi]]
+                next_gen <- X$generation[[xi]] + 1L
 
                 sir_path <- generate_sir_path(epi_time, X, id_next_event, params)
 
