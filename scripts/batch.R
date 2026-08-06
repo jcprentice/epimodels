@@ -34,7 +34,7 @@ if (run_from_script) {
         model_type = model_type,
         dataset = dataset,
         name = name,
-        use_traits = use_traits,
+        ies = ies,
         vars = vars,
         cors = cors,
         setup = setup,
@@ -63,7 +63,7 @@ if (run_from_script) {
 
         # Skip any values already provided to make_pars()
         if (param %in% c("model_type", "dataset", "name", "setup",
-                         "use_traits", "vars", "cors", "group_effect",
+                         "ies", "vars", "cors", "group_effect",
                          "trial_fe", "donor_fe", "txd_fe", "weight_fe")) {
             return()
         }
@@ -350,7 +350,7 @@ message(str_glue("censor = {x}\nTmax = {y}",
         mget() |>
         saveRDS(file = str_glue("{results_dir}/{name}.rds"))
 
-    # Generate etc_inf.rds or etc_sim.rds summary file
+    # Generate summary_inf.rds or summary_sim.rds summary file
     flatten_bici_states(dataset, name, bici_cmd)
 }
 
