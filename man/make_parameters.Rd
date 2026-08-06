@@ -5,23 +5,20 @@
 \title{Generate a list of parameters}
 \usage{
 make_parameters(
-  model_type = "SEIDR",
+  model_type = "SEIR",
   name = "scen-1-1",
   dataset = "testing",
   scenario = 1L,
   replicate = 1L,
   setup = "fb_12_rpw",
-  use_traits = "sit",
+  ies = "sit",
   vars = 1,
   cors = 0.2,
   group_layout = "fishboost",
   group_effect = -1,
-  trial_fe = "none",
-  donor_fe = "none",
-  txd_fe = "none",
-  weight_fe = "none",
-  weight_is_nested = TRUE,
-  sim_new_data = "bici"
+  fes = list(sex = "sit", age = "sit", weight = "sit"),
+  sim_new_data = "r",
+  protocol = NULL
 )
 }
 \arguments{
@@ -37,11 +34,11 @@ make_parameters(
 
 \item{setup}{Population layout}
 
-\item{use_traits}{Which traits to use (this is going to be "clever") use
-\itemize{
-\item "all" or "none", or a subset using the first letter of each trait
-\item "sildt" = "sus", "inf", "lat", "det", "tol"
-}}
+\item{ies}{Which traits are affected by individual genetic effects, either in
+simulation or inference. This should correspond to the names of the model
+traits used. Use a trait's first letter if used, or _ if unused. For linked
+traits use the letter of the trait it's linked to. "", "all", or "none" are
+also accepted, with the obvious meanings/}
 
 \item{vars}{Variances: diagonal of covariance matrix, either
 \itemize{
@@ -75,22 +72,16 @@ make_parameters(
 \item{group_effect}{Include group effect if >= 0, simulate if appropriate and
 check, ignore if < 0}
 
-\item{trial_fe}{List of fixed effects to check for Trial Should also simulate
-these if not using FB dataset. A string with the first letters of traits,
-e.g. "lidt"}
-
-\item{donor_fe}{List of fixed effects to check for Donor}
-
-\item{txd_fe}{List of fixed effects to check for Trial x Donor interaction}
-
-\item{weight_fe}{List of fixed effects to check for Weight}
-
-\item{weight_is_nested}{should weight be nested across trials? (default
-TRUE),}
+\item{fes}{A list of Fixed Effect names. Values should correspond to the full
+list of model traits they apply to, e.g. for an SEIR model with traits
+"silt" use:
+list(sex = "silt",   # all traits used
+trial = "ilt",  # susceptibility not used
+weight = "sit") # latency not used}
 
 \item{sim_new_data}{Simulate new data in "r" or "bici". Alternatively, "no"
-for using FB data, or "etc_sim" or "etc_inf" for getting data from an
-existing dataset (specified in patches)}
+for using FB data, or "summary_sim" or "summary_inf" for getting data from
+an existing dataset (specified in patches)}
 }
 \value{
 A list containing all the parameters
