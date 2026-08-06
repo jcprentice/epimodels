@@ -4,7 +4,7 @@
 \alias{make_matrices}
 \title{Construct cov_mat and Sigma matrices using var and cor components}
 \usage{
-make_matrices(model_traits, ies_used = c("s", "i", "t"), vars = 1, cors = 0.2)
+make_matrices(model_traits, IEs_used = c("s", "i", "t"), vars = 1, cors = 0.2)
 }
 \arguments{
 \item{model_traits}{A character vector of traits, e.g. \verb{c("sus", "inf", "tol)}}
@@ -21,7 +21,7 @@ make_matrices(model_traits, ies_used = c("s", "i", "t"), vars = 1, cors = 0.2)
 \item a named list e.g. \code{list(si = 0.3, st = -0.2, default = 0)}
 }}
 
-\item{ies}{A string containing the first letters of traits with individual
+\item{IEs}{A string containing the first letters of traits with individual
 genetic effects, e.g. "sit"}
 }
 \value{
