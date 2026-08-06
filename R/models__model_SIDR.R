@@ -67,11 +67,11 @@ model_SIDR <- function(popn, params) {
                                         size = 1L,
                                         prob = X$inf_rate)
 
-                infectives <- X[status %in% c("I", "D"), .(id, status, inf, generation)]
-                infd_by <- safe_sample(x = infectives$id,
-                                       size = 1L,
-                                       prob = infectives$inf)
-                next_gen <- infectives[id == infd_by, generation + 1L]
+                xi <- X[, sample(x = .N,
+                                 size = 1L,
+                                 prob = inf * (status %in% c("I", "D")))]
+                infd_by <- X$id[[xi]]
+                next_gen <- X$generation[[xi]] + 1L
 
                 sidr_path <- generate_sidr_path(epi_time, X, id_next_event, params)
 
