@@ -18,7 +18,7 @@ patch_params <- function(params, trace_row = 0) {
         patch_type    <- params$patch_type %||% "median"
         patch_state   <- params$patch_state %||% FALSE
         model_traits  <- params$model_traits
-        use_traits    <- params$use_traits
+        ies           <- params$ies
         skip_patches  <- params$skip_patches
         sim_new_data  <- params$sim_new_data
         msgs          <- params$msgs
@@ -49,13 +49,13 @@ patch_params <- function(params, trace_row = 0) {
     # If 'patch_state' is specified, use that, otherwise check if a trace file
     # is present and store the row used.
 
-    etc_src <- if (sim_new_data == "etc_sim") "etc_sim" else "etc_inf"
+    summary_src <- if (sim_new_data == "summary_sim") "summary_sim" else "summary_inf"
 
     # Select patch ----
 
     # This might be already set, in which case skip
     if (!is.numeric(patch_state) && patch_state == TRUE) {
-        f <- str_glue("{out_dir}/{etc_src}.rds")
+        f <- str_glue("{out_dir}/{summary_src}.rds")
         patch_state <- if (!file.exists(f)) {
             message("no state files found, continuing without")
             FALSE
@@ -75,19 +75,15 @@ patch_params <- function(params, trace_row = 0) {
     if (is.numeric(patch_state)) {
         if (msgs) message(str_glue("- using state: {patch_state}"))
 
-        f <- str_glue("{out_dir}/{etc_src}.rds")
+        f <- str_glue("{out_dir}/{summary_src}.rds")
         tmp <- readRDS(f)$parameters[!str_starts(parameter, "^Group")]
         tmp <- if (patch_state == 0) {
             tmp[, .(value = get(patch_type)(value)), parameter]
         } else {
             tmp[state == patch_state]
         }
-        # This is to under renaming the parameters in BICI
-        patch_vals <- setNames(as.list(tmp$value),
-                               tmp$parameter |> str_replace_all(
-                                   c("LP" = "latent_period",
-                                     "DP" = "detection_period",
-                                     "RP" = "removal_period")))
+        # This is for renaming the parameters in BICI
+        patch_vals <- setNames(as.list(tmp$value), tmp$parameter)
         rm(tmp)
     }
 
@@ -151,14 +147,11 @@ patch_params <- function(params, trace_row = 0) {
     walk(skip_patches, \(x) {
         pp <<- pp |>
             str_subset(switch(x,
-                              "base" = "sigma|beta|period|shape",
-                              "LP" = "latent_period",
-                              "RP" = "removal_period",
-                              "DP" = "detection_period",
-                              "cov" = "cov_|^r_",
-                              "infrat" = "infrat",
+                              "base" = "sigma|beta|[LDR]P|shape",
+                              "ies" = "^(cov|r)_[GE]_",
+                              "var" = "^cov_[GE]_",
+                              "cor" = "^r_[GE]_",
                               "fes" = "trial|donor|txd",
-                              "weight" = "weight",
                               "all" = ".",
                               x),
                        negate = TRUE)
@@ -185,7 +178,7 @@ patch_params <- function(params, trace_row = 0) {
     # We overwrite params2's Sigma_G and Sigma_E with new values, remembering
     # that r_*_** are correlations, not covariances, so they need to be
     # transformed first.
-    if ("cov" %notin% skip_patches) {
+    if ("ies" %notin% skip_patches) {
         priors1 <- params2$priors$true_val |>
             setNames(params2$priors$parameter) |>
             as.list()
@@ -199,7 +192,7 @@ patch_params <- function(params, trace_row = 0) {
         out <- make_matrices_from_priors(priors1)
 
         # Copy the used values, discarding the rest (even if non-zero)
-        used <- model_traits[str_chars(use_traits)]
+        used <- model_traits[str_chars(ies)]
 
         params2$Sigma_G[used, used] <- out$Sigma_G[used, used]
         params2$Sigma_E[used, used] <- out$Sigma_E[used, used]
@@ -223,31 +216,31 @@ patch_params <- function(params, trace_row = 0) {
         params2$inf_ratio <- patch_vals$infrat
         pars_patched <- c(pars_patched, "infection ratio")
     }
-    if ("latent_period" %in% pp) {
-        params2$latent_period <- patch_vals$latent_period
-        pars_patched <- c(pars_patched, "latent period")
+    if ("LP" %in% pp) {
+        params2$LP <- patch_vals$LP
+        pars_patched <- c(pars_patched, "LP")
     }
     if ("LP_shape" %in% pp) {
         params2$LP_shape <- patch_vals$LP_shape
-        params2$LP_scale <- patch_vals$latent_period / params2$LP_shape
+        params2$LP_scale <- patch_vals$LP / params2$LP_shape
         pars_patched <- c(pars_patched, "LP scale", "LP shape")
     }
-    if ("detection_period" %in% pp) {
-        params2$detection_period <- 1 / patch_vals$detection_period
-        pars_patched <- c(pars_patched, "detection period")
+    if ("DP" %in% pp) {
+        params2$DP <- 1 / patch_vals$DP
+        pars_patched <- c(pars_patched, "DP")
     }
     if ("DP_shape" %in% pp) {
         params2$DP_shape <- patch_vals$DP_shape
-        params2$DP_scale <- patch_vals$detection_period / params2$DP_shape
+        params2$DP_scale <- patch_vals$DP / params2$DP_shape
         pars_patched <- c(pars_patched, "DP scale", "DP shape")
     }
-    if ("removal_period" %in% pp) {
-        params2$removal_period <- patch_vals$removal_period
-        pars_patched <- c(pars_patched, "removal period")
+    if ("RP" %in% pp) {
+        params2$RP <- patch_vals$RP
+        pars_patched <- c(pars_patched, "RP")
     }
     if ("RP_shape" %in% pp) {
         params2$RP_shape <- patch_vals$RP_shape
-        params2$RP_scale <- patch_vals$removal_period / params2$RP_shape
+        params2$RP_scale <- patch_vals$RP / params2$RP_shape
         pars_patched <- c(pars_patched, "RP scale", "RP shape")
     }
     if ("sigma" %in% pp) {
