@@ -107,7 +107,7 @@ generate_bici_script <- function(popn, params) {
             list(algorithm = "MFA")
         }
 
-        x$inference <- c(x$inference, alg)
+        x$inference <- c(x$inference, alg, compress = "never")
 
 
         ## Simulation ----
@@ -121,7 +121,8 @@ generate_bici_script <- function(popn, params) {
                              end = tmax10,
                              number = nreps,
                              timestep = timestep,
-                             seed = seed)
+                             seed = seed,
+                             compress = "never")
 
         ## Post-Sim ----
 
@@ -131,7 +132,8 @@ generate_bici_script <- function(popn, params) {
                           start = 0,
                           end = tmax10,
                           number = nreps,
-                          seed = seed)
+                          seed = seed,
+                          compress = "never")
 
 
         # Model details ----
@@ -368,11 +370,12 @@ generate_bici_script <- function(popn, params) {
         ## Additive genetic effects ----
 
         # IEs as "sg,ig,tg". We use this several times, so keep it.
-        ies_str <- str_c(intersect(str_chars(use_traits),
+        ies_used <- uniq_chars(ies) |> str_subset("_", negate = TRUE)
+        ies_str <- str_c(intersect(str_chars(ies),
                                    str_chars(link_traits)),
                          "g", collapse = ",")
 
-        if (use_traits %notin% c("", "none")) {
+        if (ies %notin% c("", "none")) {
 
             # BICI can only handle one of inverse or sparse, prefer inverse
             if (str_detect(use_grm, "H.*inv.*nz")) {
@@ -454,7 +457,7 @@ generate_bici_script <- function(popn, params) {
 
         ## True BVs ----
         if (bici_cmd == "inf" && str_detect(dataset, "sim")) {
-            traits_to_fit <- model_traits[intersect(str_chars(use_traits),
+            traits_to_fit <- model_traits[intersect(ies_used,
                                                     str_chars(link_traits))]
             ie_names <- expand.grid(traits_to_fit, c("g", "e")) |>
                 apply(1, str_flatten, "_")
@@ -525,7 +528,7 @@ generate_bici_script <- function(popn, params) {
 
         get_IEs <- function(trait) {
             t1 <- str_1st(trait)
-            if (str_detect(use_traits, t1)) {
+            if (t1 %in% ies_used) {
                 iex <- get_LE(link_traits, t1)
                 str_glue("[{iex}g][{iex}e]")
             } else {
@@ -550,7 +553,7 @@ generate_bici_script <- function(popn, params) {
             }
         })
 
-        # If no FEs or Ies on infection, then remove the "; "
+        # If no FEs or IEs on infection, then remove the "; "
         x$trans_inf$value <- str_replace_all(x$trans_inf$value, "; \\}", "}")
 
         ### Weight ----
@@ -663,11 +666,9 @@ generate_bici_script <- function(popn, params) {
             })
 
 
-            # Event periods
-            walk(c("latent", "detection", "removal"), \(period) {
-                pp <- period_to_pp(period)
-
-                prior <- priors[parameter %in% str_c(period, "_period", t_bc),
+            # Transition periods
+            walk(c("LP", "DP", "RP"), \(tp) {
+                prior <- priors[parameter %in% str_c(tp, t_bc),
                                 .(Value = true_val,
                                   Prior = fcase(
                                       type == "constant",
@@ -690,26 +691,29 @@ generate_bici_script <- function(popn, params) {
         }
 
         # Check for fixed periods
-        lp_types <- with(priors[str_ends(parameter, "period"), .(parameter, type)],
+        lp_types <- with(priors[str_ends(parameter, "[LDR]P"), .(parameter, type)],
                          setNames(type, parameter)) |> as.list()
 
-        if (use_traits %notin% c("", "none")) {
-            val1 <- params$priors[str_detect(parameter, "cov_"), min(val1)] |>
-                max(if (cov_prior == "uniform") 0.01 else 0.5)
+        if (ies %notin% c("", "none", NA)) {
+           if (!exists("cov_prior")) {
+                cov_prior <- list(type = "default", vals = c())
+            }
 
-            val2 <- params$priors[str_detect(parameter, "cov_"), max(val2)]
-
-            if (!exists("cov_prior")) cov_prior <- "uniform"
+            cov_prior_str <- str_glue("covar-{x}({y})",
+                                      x = cov_prior$type,
+                                      y = cov_prior$vals |>
+                                          map_chr(format, scientific = FALSE) |>
+                                          str_flatten(","))
 
             x$prior_cov_G <- list(
                 node = "param",
                 name = "\\Omega^gen_z,z'",
                 value = "value-cov-gen.tsv",
-                prior = str_glue("mvn-{cov_prior}({val1},{val2})")
+                prior = cov_prior_str
             )
 
             # Possibly already defined, maybe not
-            traits_to_fit <- model_traits[intersect(str_chars(use_traits),
+            traits_to_fit <- model_traits[intersect(ies_used,
                                                     str_chars(link_traits))]
 
             XG <- Sigma_G[traits_to_fit, traits_to_fit] |> round(5)
@@ -724,7 +728,7 @@ generate_bici_script <- function(popn, params) {
                 node = "param",
                 name = "\\Omega^env_z,z'",
                 value = "value-cov-env.tsv",
-                prior = str_glue("mvn-{cov_prior}({val1},{val2})")
+                prior = cov_prior_str
             )
 
             XE <- Sigma_E[traits_to_fit, traits_to_fit] |> round(5)
@@ -751,9 +755,8 @@ generate_bici_script <- function(popn, params) {
             if (pname == "beta") {
                 pname <- "beta_b"
                 ppi$true_val <- "value-beta.tsv"
-            } else if (str_ends(pname, "period")) {
-                # "latent_period" -> "LP_b,c"
-                pname <- period_to_pp(pname)
+            } else if (pname %in% c("LP", "DP", "RP")) {
+                # "LP" -> "LP_b,c"
                 ppi$true_val <- str_glue("value-{pname}.tsv")
                 pname <- pname |> str_c("_b,c")
             } else if (str_ends(pname, "shape")) {
@@ -793,9 +796,8 @@ generate_bici_script <- function(popn, params) {
 
             if (ppi$parameter == "beta") {
                 x_ns[["prior-split"]] <- "prior-beta.tsv"
-            } else if (str_ends(ppi$parameter, "period")) {
-                x_ns[["prior-split"]] <- str_glue("prior-{ppar}.tsv",
-                                                  ppar = period_to_pp(ppi$parameter))
+            } else if (str_ends(ppi$parameter, "[LDR]P")) {
+                x_ns[["prior-split"]] <- str_glue("prior-{ppi$parameter}.tsv")
             } else {
                 x_ns$prior <- switch(
                     ppi$type,
