@@ -31,28 +31,24 @@ model_SIS <- function(popn, params) {
 
         # Calculate infection rates in each group
         # this is the sum of the log infectivitities
-        X[, group_inf := r_beta * GE * mean(inf * (status == "I")), by = group]
+        X[, group_inf := r_beta * GE * mean(inf * (status == "I"))]
 
         # if S, infection at rate beta SI
-        X[, inf_rate := fifelse(status == "S", sus * group_inf, 0.0)]
+        X[, inf_rate := sus * group_inf * (status == "S")]
 
         # id and time of next non-infection event
-        ni_event <- next_sis_ni_event(X, epi_time)
-        t_next_event <- ni_event$t_next_event
-        id_next_event <- ni_event$id_next_event
+            t_next_event  <- ni_events$time[[1]]
+            id_next_event <- ni_events$I[[1]]
 
-        if (DEBUG) message("Next NI event id = ", id_next_event, " at t = ", t_next_event)
+        if (DEBUG) message("Next NI event id = ", id_next_event,
+            " at t = ", t_next_event)
 
 
         # generate random timestep ----
         total_inf_rate <- sum(X$inf_rate)
 
         # calculate dt if infections event rate > 0
-        if (total_inf_rate > 0.0) {
-            dt <- rexp(1L, rate = total_inf_rate)
-        } else {
-            dt <- Inf
-        }
+        dt <- rexp(1L) / total_inf_rate
         if (DEBUG) message("Total Infections Event Rate = ", signif(total_inf_rate, 5))
 
         # check if next event is infection or non-infection
@@ -67,11 +63,11 @@ model_SIS <- function(popn, params) {
                                     prob = X$inf_rate)
 
             group_id <- X$group[id_next_event]
-            infectives <- X[, .(.I, group, status, inf)][group == group_id & status == "I"]
-            infd_by <- safe_sample(x = infectives$I,
+            infectives <- X[, .(id, group, status, inf, generation)][group == group_id & status == "I"]
+            infd_by <- safe_sample(x = infectives$id,
                                    size = 1L,
                                    prob = infectives$inf)
-            next_gen <- X[infd_by, generation + 1L]
+            next_gen <- infectives[id == infd_by, generation + 1L]
 
             sis_path <- generate_sis_path(epi_time, X, id_next_event, params)
             set(X, id_next_event, c("status", "Tinf", "Tdeath"), sis_path)

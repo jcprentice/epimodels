@@ -23,7 +23,7 @@ model_SEIR <- function(popn, params) {
 
     Y <- map(Xgroups, \(X) {
         # This is a priority queue for the next event
-        ni_events <- X[, .(.I, Tsym, Tdeath)] |>
+        ni_events <- X[, .(.I, Tsign, Tdeath)] |>
             melt(id.vars = "I", variable.name = "event", value.name = "time") |>
             setorder(time, na.last = TRUE)
         ni_events[, event := NULL]
@@ -34,10 +34,10 @@ model_SEIR <- function(popn, params) {
             if (DEBUG) message("time = ", signif(epi_time, 5))
 
             # Calculate infection rates in each group ----
-            X[, group_inf := r_beta * GE * mean(fifelse(status %in% c("I", "D"), inf, 0.0))]
+            X[, group_inf := r_beta * GE * mean(inf * (status %in% c("I", "D")))]
 
             # if S, infection at rate beta SI
-            X[, inf_rate := fifelse(status == "S", sus * group_inf, 0.0)]
+            X[, inf_rate := sus * group_inf * (status == "S")]
 
             # id and time of next non-infection event
             t_next_event  <- ni_events$time[[1]]
@@ -46,17 +46,13 @@ model_SEIR <- function(popn, params) {
             if (is.na(t_next_event)) t_next_event <- Inf
 
             if (DEBUG) message("Next NI event id = ", id_next_event,
-                               " at t = ", signif(t_next_event, 5))
+                " at t = ", signif(t_next_event, 5))
 
             # generate random timestep ----
             total_inf_rate <- sum(X$inf_rate)
 
             # calculate dt if infections event rate > 0
-            dt <- if (total_inf_rate > 0.0) {
-                rexp(1L, rate = total_inf_rate)
-            } else {
-                Inf
-            }
+            dt <- rexp(1L) / total_inf_rate
 
             if (DEBUG) message("Total infections event rate = ", signif(total_inf_rate, 5))
 
@@ -71,14 +67,14 @@ model_SEIR <- function(popn, params) {
                                         size = 1L,
                                         prob = X$inf_rate)
 
-                infectives <- X[status == "I", .(.I, status, inf)]
-                infd_by <- safe_sample(x = infectives$I,
+                infectives <- X[status == "I", .(id, status, inf, generation)]
+                infd_by <- safe_sample(x = infectives$id,
                                        size = 1L,
                                        prob = infectives$inf)
-                next_gen <- X$generation[[infd_by]] + 1L
+                next_gen <- infectives[id == infd_by, generation + 1L]
 
                 seir_path <- generate_seir_path(epi_time, X, id_next_event, params)
-                set(X, id_next_event, c("status", "Tinf", "Tsym", "Tdeath"), seir_path)
+                set(X, id_next_event, c("status", "Tinf", "Tsign", "Tdeath"), seir_path)
 
                 ni_events[I == id_next_event, time := as.numeric(seir_path[-(1:2)])]
 
@@ -102,8 +98,8 @@ model_SEIR <- function(popn, params) {
                     set(X, id_next_event, "status", "R")
                 } else {
                     message("status = ", status)
-                    print(X[, .(group, donor, status, Tinf, Tsym, Tdeath, group_inf, inf_rate)])
-                    print(X[id_next_event, .(group, donor, status, Tinf, Tsym, Tdeath, group_inf, inf_rate)])
+                    print(X[, .(group, donor, status, Tinf, Tsign, Tdeath, group_inf, inf_rate)])
+                    print(X[id_next_event, .(group, donor, status, Tinf, Tsign, Tdeath, group_inf, inf_rate)])
                     stop("selected ID ", id_next_event, "... unexpected event!")
                     break
                 }
@@ -114,7 +110,7 @@ model_SEIR <- function(popn, params) {
             setorder(ni_events, time, na.last = TRUE)
 
             if (DEBUG == 2) {
-                print(X[, .(group, donor, status, Tinf, Tsym, Tdeath, group_inf, inf_rate)])
+                print(X[, .(group, donor, status, Tinf, Tsign, Tdeath, group_inf, inf_rate)])
             }
         }
         X
@@ -143,10 +139,10 @@ model_SEIR <- function(popn, params) {
 generate_seir_path <- function(epi_time, X, id, params) {
     with(params, {
         Tinf   <- epi_time
-        Tsym   <- Tinf + rgamma(1L, LP_shape, scale = LP_scale * X$lat[[id]])
-        Tdeath <- Tsym + rgamma(1L, RP_shape, scale = RP_scale * X$tol[[id]])
+        Tsign  <- Tinf  + rgamma(1L, LP_shape, scale = LP_scale * X$lat[[id]])
+        Tdeath <- Tsign + rgamma(1L, RP_shape, scale = RP_scale * X$tol[[id]])
 
-        list("E", Tinf, Tsym, Tdeath)
+        list("E", Tinf, Tsign, Tdeath)
     })
 }
 

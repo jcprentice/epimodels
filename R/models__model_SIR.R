@@ -34,29 +34,25 @@ model_SIR <- function(popn, params) {
             if (DEBUG) message("time = ", signif(epi_time, 5))
 
             # Calculate infection rates in each group ----
-            X[, group_inf := r_beta * GE * mean(fifelse(status == "I", inf, 0.0))]
+            X[, group_inf := r_beta * GE * mean(inf * (status == "I"))]
 
             # if S, infection at rate beta SI
-            X[, inf_rate := fifelse(status == "S", sus * group_inf, 0.0)]
+            X[, inf_rate := sus * group_inf * (status == "S")]
 
             # id and time of next non-infection event
-            ni_event      <- next_sir_ni_event(X, epi_time)
-            t_next_event  <- ni_event$t_next_event
-            id_next_event <- ni_event$id_next_event
+            t_next_event  <- ni_events$time[[1]]
+            id_next_event <- ni_events$I[[1]]
 
             if (is.na(t_next_event)) t_next_event <- Inf
 
-            if (DEBUG) message("Next NI event id = ", id_next_event, " at t = ", signif(t_next_event, 5))
+            if (DEBUG) message("Next NI event id = ", id_next_event,
+                " at t = ", signif(t_next_event, 5))
 
             # generate random timestep ----
             total_inf_rate <- sum(X$inf_rate)
 
             # calculate dt if infections event rate > 0
-            dt <- if (total_inf_rate > 0.0) {
-                rexp(1L, rate = total_inf_rate)
-            } else {
-                Inf
-            }
+            dt <- rexp(1L) / total_inf_rate
 
             if (DEBUG) message("Total infections event rate = ", signif(total_inf_rate, 5))
 
@@ -71,11 +67,11 @@ model_SIR <- function(popn, params) {
                                         size = 1L,
                                         prob = X$inf_rate)
 
-                infectives <- X[status == "I", .(.I, status, inf)]
-                infd_by <- safe_sample(x = infectives$I,
+                infectives <- X[status == "I", .(id, status, inf, generation)]
+                infd_by <- safe_sample(x = infectives$id,
                                        size = 1L,
                                        prob = infectives$inf)
-                next_gen <- X$generation[[infd_by]] + 1L
+                next_gen <- infectives[id == infd_by, generation + 1L]
 
                 sir_path <- generate_sir_path(epi_time, X, id_next_event, params)
                 set(X, id_next_event, c("status", "Tinf", "Tdeath"), sir_path)

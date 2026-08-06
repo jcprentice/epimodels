@@ -22,8 +22,11 @@ model_SEIDR <- function(popn, params) {
     # them by group, run them separately, then recombine them.
 
     Y <- map(Xgroups, \(X) {
+        if (FALSE) {
+            X <- copy(Xgroups[[1]])
+        }
         # This is a priority queue for the next event
-        ni_events <- X[, .(.I, Tinc, Tsym, Tdeath)] |>
+        ni_events <- X[, .(.I, Tinc, Tsign, Tdeath)] |>
             melt(id.vars = "I", variable.name = "event", value.name = "time") |>
             setorder(time, na.last = TRUE)
         ni_events[, event := NULL]
@@ -34,10 +37,10 @@ model_SEIDR <- function(popn, params) {
             if (DEBUG) message("time = ", signif(epi_time, 5))
 
             # Calculate infection rates in each group ----
-            X[, group_inf := r_beta * GE * mean(fifelse(status %in% c("I", "D"), inf, 0.0))]
+            X[, group_inf := r_beta * GE * mean(inf * (status %in% c("I", "D")))]
 
             # if S, infection at rate beta SI
-            X[, inf_rate := fifelse(status == "S", sus * group_inf, 0.0)]
+            X[, inf_rate := sus * group_inf * (status == "S")]
 
             # id and time of next non-infection event
             t_next_event  <- ni_events$time[[1]]
@@ -52,11 +55,7 @@ model_SEIDR <- function(popn, params) {
             total_inf_rate <- sum(X$inf_rate)
 
             # calculate dt if infections event rate > 0
-            dt <- if (total_inf_rate > 0.0) {
-                rexp(1L, rate = total_inf_rate)
-            } else {
-                Inf
-            }
+            dt <- rexp(1L) / total_inf_rate
 
             if (DEBUG) message("Total infections event rate = ", signif(total_inf_rate, 5))
 
@@ -69,14 +68,14 @@ model_SEIDR <- function(popn, params) {
                 # randomly select individual
                 id_next_event <- sample(nrow(X), size = 1L, prob = X$inf_rate)
 
-                infectives <- X[status %in% c("I", "D"), .(.I, status, inf)]
-                infd_by <- safe_sample(x = infectives$I,
-                                       size = 1L,
-                                       prob = infectives$inf)
-                next_gen <- X$generation[[infd_by]] + 1L
+                xi <- X[, sample(x = .N,
+                                 size = 1L,
+                                 prob = inf * (status %in% c("I", "D")))]
+                infd_by <- X$id[[xi]]
+                next_gen <- X$generation[[xi]] + 1L
 
                 seidr_path <- generate_seidr_path(epi_time, X, id_next_event, params)
-                set(X, id_next_event, c("status", "Tinf", "Tinc", "Tsym", "Tdeath"), seidr_path)
+                set(X, id_next_event, c("status", "Tinf", "Tinc", "Tsign", "Tdeath"), seidr_path)
 
                 ni_events[I == id_next_event, time := as.numeric(seidr_path[-(1:2)])]
 
@@ -103,8 +102,8 @@ model_SEIDR <- function(popn, params) {
                     set(X, id_next_event, "status", "R")
                 } else {
                     message("status = ", status)
-                    print(X[, .(group, donor, status, Tinf, Tinc, Tsym, Tdeath, group_inf, inf_rate)])
-                    print(X[id_next_event, .(group, donor, status, Tinf, Tinc, Tsym, Tdeath, group_inf, inf_rate)])
+                    print(X[, .(group, donor, status, Tinf, Tinc, Tsign, Tdeath, group_inf, inf_rate)])
+                    print(X[id_next_event, .(group, donor, status, Tinf, Tinc, Tsign, Tdeath, group_inf, inf_rate)])
                     stop("selected ID ", id_next_event, "... unexpected event!")
                     break
                 }
@@ -115,7 +114,9 @@ model_SEIDR <- function(popn, params) {
             setorder(ni_events, time, na.last = TRUE)
 
             if (DEBUG == 2) {
-                print(X[, .(group, donor, status, Tinf, Tinc, Tsym, Tdeath, group_inf, inf_rate)])
+                print(X[, .(donor, status, Tinf, Tinc, Tsign, Tdeath,
+                            generation, infected_by)])
+                # print(X[, .(donor, status, generation, infected_by)])
             }
         }
         X
@@ -144,11 +145,11 @@ model_SEIDR <- function(popn, params) {
 generate_seidr_path <- function(epi_time, X, id, params) {
     with(params, {
         Tinf   <- epi_time
-        Tinc   <- Tinf + rgamma(1L, LP_shape, scale = LP_scale * X$lat[[id]])
-        Tsym   <- Tinc + rgamma(1L, DP_shape, scale = DP_scale * X$det[[id]])
-        Tdeath <- Tsym + rgamma(1L, RP_shape, scale = RP_scale * X$tol[[id]])
+        Tinc   <- Tinf  + rgamma(1L, LP_shape, scale = LP_scale * X$lat[[id]])
+        Tsign  <- Tinc  + rgamma(1L, DP_shape, scale = DP_scale * X$det[[id]])
+        Tdeath <- Tsign + rgamma(1L, RP_shape, scale = RP_scale * X$tol[[id]])
 
-        list("E", Tinf, Tinc, Tsym, Tdeath)
+        list("E", Tinf, Tinc, Tsign, Tdeath)
     })
 }
 
