@@ -78,8 +78,7 @@ model_SIS <- function(popn, params) {
                                         size = 1L,
                                         prob = X$inf_rate)
 
-                xi <- X[, sample(.N, 1L,
-                                 prob = inf * (status == "I"))]
+                xi <- X[, sample(.N, 1L, prob = inf * (status == "I"))]
                 infd_by <- X$id[[xi]]
                 next_gen <- X$generation[[xi]] + 1L
 
