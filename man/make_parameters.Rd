@@ -11,12 +11,12 @@ make_parameters(
   scenario = 1L,
   replicate = 1L,
   setup = "fb_12_rpw",
+  group_layout = "fishboost",
   IEs = "sit",
   vars = 1,
   cors = 0.2,
-  group_layout = "fishboost",
-  group_effect = -1,
   FEs = list(sex = "sit", age = "sit", weight = "sit"),
+  group_effect = -1,
   sim_new_data = "r",
   protocol = NULL
 )
@@ -33,6 +33,9 @@ make_parameters(
 \item{replicate}{Integer for replicate}
 
 \item{setup}{Population layout}
+
+\item{group_layout}{How to arrange individuals into groups: "random",
+"striped", "family", "fishboost"}
 
 \item{IEs}{Which traits are affected by individual genetic effects, either in
 simulation or inference. This should correspond to the names of the model
@@ -66,18 +69,15 @@ also accepted, with the obvious meanings/}
 }
 }}
 
-\item{group_layout}{How to arrange individuals into groups: "random",
-"striped", "family", "fishboost"}
-
-\item{group_effect}{Include group effect if >= 0, simulate if appropriate and
-check, ignore if < 0}
-
 \item{FEs}{A list of Fixed Effect names. Values should correspond to the full
 list of model traits they apply to, e.g. for an SEIR model with traits
 "silt" use:
 list(sex = "silt",   # all traits used
 trial = "ilt",  # susceptibility not used
 weight = "sit") # latency not used}
+
+\item{group_effect}{Include group effect if >= 0, simulate if appropriate and
+check, ignore if < 0}
 
 \item{sim_new_data}{Simulate new data in "r" or "bici". Alternatively, "no"
 for using FB data, or "summary_sim" or "summary_inf" for getting data from
