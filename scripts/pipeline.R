@@ -20,7 +20,7 @@ run_from_script <- length(cmd_args) > 0
 
 {
     params <- make_parameters(
-        model_type = "SIS", # "SIR", "SEIR", "SIDR", or "SEIDR"
+        model_type = c("SEIDR", "SEIR", "SIDR", "SIR", "SIS")[[5]],
         dataset = "testing",
         name = "scen-1-1",
         setup = "fb_12_rpw", # chris, small, fb_12, fb_1, fb_2, single
