@@ -10,6 +10,8 @@
 #' @param scenario Integer for scenario
 #' @param replicate Integer for replicate
 #' @param setup Population layout
+#' @param group_layout How to arrange individuals into groups: "random",
+#'   "striped", "family", "fishboost"
 #' @param IEs Which traits are affected by individual genetic effects, either in
 #'   simulation or inference. This should correspond to the names of the model
 #'   traits used. Use a trait's first letter if used, or _ if unused. For linked
@@ -27,16 +29,14 @@
 #'     * list(si = 0.3, st = -0.1, it = 0.2, default = 0)
 #' * a named list of compatible with the lower triangle order, e.g.
 #'     * list(si, sl, sd, st, il, id, it, ld, lt, dt)
-#' @param group_layout How to arrange individuals into groups: "random",
-#'   "striped", "family", "fishboost"
-#' @param group_effect Include group effect if >= 0, simulate if appropriate and
-#'   check, ignore if < 0
 #' @param FEs A list of Fixed Effect names. Values should correspond to the full
 #'   list of model traits they apply to, e.g. for an SEIR model with traits
 #'   "silt" use:
 #'   list(sex = "silt",   # all traits used
 #'        trial = "ilt",  # susceptibility not used
 #'        weight = "sit") # latency not used
+#' @param group_effect Include group effect if >= 0, simulate if appropriate and
+#'   check, ignore if < 0
 #' @param sim_new_data Simulate new data in "r" or "bici". Alternatively, "no"
 #'   for using FB data, or "summary_sim" or "summary_inf" for getting data from
 #'   an existing dataset (specified in patches)
@@ -46,9 +46,10 @@
 
 make_parameters <- function(
         model_type = "SEIR", name = "scen-1-1", dataset = "testing",
-        scenario = 1L, replicate = 1L, setup = "fb_12_rpw", IEs = "sit",
-        vars = 1.0, cors = 0.2, group_layout = "fishboost", group_effect = -1,
+        scenario = 1L, replicate = 1L, setup = "fb_12_rpw", group_layout = "fishboost",
+        IEs = "sit", vars = 1.0, cors = 0.2,
         FEs = list(sex = "sit", age = "sit", weight = "sit"),
+        group_effect = -1,
         sim_new_data = "r",
         protocol = NULL
 ) {
@@ -66,33 +67,33 @@ make_parameters <- function(
         sim_new_data <- "r";
     }
 
-    # For importing from a protocol file
-    if (!is.null(protocol)) {
+    # For importing from a protocol file. Any parameters that just need defining
+    # can be added here, but others that need post-processing will be defined
+    # later.
+    if (!missing(protocol) && !is.null(protocol)) {
         message("- using Protocol for args")
-        for (v in c("model_type", "dataset", "name", "scenario", "replicate",
-                    "setup", "IEs", "vars", "cors", "group_layout",
-                    "group_effect", "trial_fe", "donor_fe", "txd_fe",
-                    "weight_fe", "weight_is_nested", "sim_new_data,")) {
-            if (v %in% names(protocol)) {
-                assign(v, protocol[[v]])
+        for (key in names(protocol)) {
+            val <- protocol[[key]]
+            if (length(val) > 1 || !is.na(val)) {
+                assign(key, val)
             }
         }
     }
 
     # Fix any parameters incorrectly assigned as NULL
     {
-        model_type    <- model_type %||% "SEIDR"
-        name          <- name %||% "scen-1-1"
-        dataset       <- dataset %||% "testing"
-        scenario      <- scenario %||% 1L
-        replicate     <- replicate %||% 1L
-        setup         <- setup %||% "fb_12_rpw"
-        IEs           <- IEs %||% "si__t"
-        vars          <- vars %||% 0
-        cors          <- cors %||% 0
-        group_layout  <- group_layout %||% "fishboost"
-        FEs           <- FEs %||% list()
-        sim_new_data  <- sim_new_data %||% "r"
+        if (missing(model_type))   model_type <- "SEIDR"
+        if (missing(name))         name <- "scen-1-1"
+        if (missing(dataset))      dataset <- "testing"
+        if (missing(scenario))     scenario <- 1L
+        if (missing(replicate))    replicate <- 1L
+        if (missing(setup))        setup <- "fb_12_rpw"
+        if (missing(IEs))          IEs <- "si__t"
+        if (missing(vars))         vars <- 0
+        if (missing(cors))         cors <- 0
+        if (missing(group_layout)) group_layout <- "fishboost"
+        if (missing(FEs))          FEs <- list()
+        if (missing(sim_new_data)) sim_new_data <- "r"
     }
 
     # Description
