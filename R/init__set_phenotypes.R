@@ -12,10 +12,6 @@
 set_phenotypes <- function(popn, params) {
     {
         model_traits     <- params$model_traits
-        sim_trial_fe     <- params$sim_trial_fe
-        sim_donor_fe     <- params$sim_donor_fe
-        sim_txd_fe       <- params$sim_txd_fe
-        sim_weight_fe    <- params$sim_weight_fe
         FEs              <- params$FEs
         FE_vals          <- params$FE_vals
         use_weight       <- params$use_weight
@@ -36,11 +32,11 @@ set_phenotypes <- function(popn, params) {
 
     mat <- matrix(0,
                   nrow = popn2[sdp == "progeny", .N],
-                  ncol = length(params$FEs),
-                  dimnames = list(NULL, names(params$FEs)))
+                  ncol = length(FEs),
+                  dimnames = list(NULL, names(FEs)))
 
     walk(names(FEs), \(FE) {
-        mat[, FE] <<- if (weight_is_nested && str_detect(FE, "weight")) {
+        mat[, FE] <<- if (weight_is_nested && str_detect(FE, "weight\\d")) {
             tr <- FE |> str_extract("\\d+") |> as.integer()
             popn2[sdp == "progeny", recentre(log(weight)), trial] |>
                 _[, fifelse(trial == tr, V1, 0)]
@@ -52,6 +48,8 @@ set_phenotypes <- function(popn, params) {
             popn2[sdp == "progeny", recentre(donor == 1L)]
         } else if (str_detect(FE, "txd")) {
             popn2[sdp == "progeny", recentre(trial == 2L & donor == 1L)]
+        } else {
+            0
         }
     })
 
