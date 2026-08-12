@@ -1,6 +1,6 @@
 #' Apply trial, donor, and weight FEs to popn.
 #'
-#' @description `apply_fixed_effects()` takes a population data.table and a
+#' @description `set_phenotypes()` takes a population data.table and a
 #'   parameters list and applies all the fixed effects defined by `sim_X_fe`
 #'   according to the FE values contained in `FE_vals`.
 #'
@@ -9,7 +9,7 @@
 #'
 #' @returns A new population file with FEs applied to phenotypes
 
-apply_fixed_effects <- function(popn, params) {
+set_phenotypes <- function(popn, params) {
     {
         model_traits     <- params$model_traits
         sim_trial_fe     <- params$sim_trial_fe
@@ -22,7 +22,7 @@ apply_fixed_effects <- function(popn, params) {
         weight_is_nested <- params$weight_is_nested
     }
 
-    message("Applying fixed effects to popn...")
+    message("- Applying fixed effects to popn...")
 
     popn2 <- copy(popn)
 
@@ -61,6 +61,7 @@ apply_fixed_effects <- function(popn, params) {
     mat_e <- popn2[sdp == "progeny", ..traits_e] |> as.matrix()
 
     # Calculate the phenotype
+    message(" - Setting individual phenotypes ...")
     mat_pt <- exp(mat_g + mat_e + mat_fe)
     colnames(mat_pt) <- model_traits
 
