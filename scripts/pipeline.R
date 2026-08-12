@@ -86,7 +86,8 @@ if (params$sim_new_data != "no") {
         set_groups(params) |> # Set groups, trial, donors, and group effect
         set_traits(params) |> # Set genotypic and environmental traits
         set_weights(params) |>
-        apply_fixed_effects(params) # Set phenotypes
+        # apply_links(params) |>
+        set_phenotypes(params) # Set phenotypes
 } else {
     popn <- readRDS(str_glue("fb_data/{params$setup}.rds"))
 
