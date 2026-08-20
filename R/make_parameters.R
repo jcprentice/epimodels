@@ -277,8 +277,8 @@ make_parameters <- function(
 
     # A default set of FEs
     FE_vals <- matrix(0,
-                      ncol = length(model_traits),
                       nrow = length(FEs),
+                      ncol = length(model_traits),
                       dimnames = list(FE = names(FEs),
                                       traits = unname(model_traits)))
 
