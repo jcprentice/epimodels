@@ -46,7 +46,7 @@ model_SIR <- function(popn, params) {
             if (is.na(t_next_event)) t_next_event <- Inf
 
             if (DEBUG) message("Next NI event id = ", id_next_event,
-                " at t = ", signif(t_next_event, 5))
+                               " at t = ", signif(t_next_event, 5))
 
             # generate random timestep ----
             total_inf_rate <- sum(X$inf_rate)
@@ -63,13 +63,9 @@ model_SIR <- function(popn, params) {
                 epi_time <- epi_time + dt
 
                 # randomly select individual
-                id_next_event <- sample(nrow(X),
-                                        size = 1L,
-                                        prob = X$inf_rate)
+                id_next_event <- sample(nrow(X), 1L, prob = X$inf_rate)
 
-                xi <- X[, sample(x = .N,
-                                 size = 1L,
-                                 prob = inf * (status == "I"))]
+                xi <- X[, sample(.N, 1L, prob = inf * (status == "I"))]
                 infd_by <- X$id[[xi]]
                 next_gen <- X$generation[[xi]] + 1L
 

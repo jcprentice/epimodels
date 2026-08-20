@@ -57,15 +57,18 @@ model_SIS <- function(popn, params) {
             t_next_event  <- ni_events$time[[1]]
             id_next_event <- ni_events$I[[1]]
 
+            if (is.na(t_next_event)) t_next_event <- Inf
+
             if (DEBUG) message("Next NI event id = ", id_next_event,
-                               " at t = ", t_next_event)
+                               " at t = ", signif(t_next_event, 5))
 
             # generate random timestep ----
             total_inf_rate <- sum(X$inf_rate)
 
             # calculate dt if infections event rate > 0
             dt <- rexp(1L) / total_inf_rate
-            if (DEBUG) message("Total Infections Event Rate = ", signif(total_inf_rate, 5))
+
+            if (DEBUG) message("Total infections event rate = ", signif(total_inf_rate, 5))
 
             # check if next event is infection or non-infection
             if (epi_time + dt < t_next_event) {
@@ -74,9 +77,7 @@ model_SIS <- function(popn, params) {
                 epi_time <- epi_time + dt
 
                 # randomly select individual
-                id_next_event <- sample(nrow(X),
-                                        size = 1L,
-                                        prob = X$inf_rate)
+                id_next_event <- sample(nrow(X), 1L, prob = X$inf_rate)
 
                 xi <- X[, sample(.N, 1L, prob = inf * (status == "I"))]
                 infd_by <- X$id[[xi]]

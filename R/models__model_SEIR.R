@@ -34,7 +34,7 @@ model_SEIR <- function(popn, params) {
             if (DEBUG) message("time = ", signif(epi_time, 5))
 
             # Calculate infection rates in each group ----
-            X[, group_inf := r_beta * GE * mean(inf * (status %in% c("I", "D")))]
+            X[, group_inf := r_beta * GE * mean(inf * (status == "I"))]
 
             # if S, infection at rate beta SI
             X[, inf_rate := sus * group_inf * (status == "S")]
@@ -63,13 +63,9 @@ model_SEIR <- function(popn, params) {
                 epi_time <- epi_time + dt
 
                 # randomly select individual
-                id_next_event <- sample(nrow(X),
-                                        size = 1L,
-                                        prob = X$inf_rate)
+                id_next_event <- sample(nrow(X), 1L, prob = X$inf_rate)
 
-                xi <- X[, sample(x = .N,
-                                 size = 1L,
-                                 prob = inf * (status == "I"))]
+                xi <- X[, sample(.N, 1L, prob = inf * (status == "I"))]
                 infd_by <- X$id[[xi]]
                 next_gen <- X$generation[[xi]] + 1L
 
