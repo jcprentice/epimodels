@@ -1,0 +1,249 @@
+---
+title: "epidemic-modelling-guide"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{epidemic-modelling-guide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(epimodels)
+```
+## Simulating a Basic SIR Epidemic with Pedigree Structures
+This example demonstrates how to initialise parameters for a basic Susceptible-Infectious-Removed (SIR) epidemic, generate a multi-generation hierarchical pedigree, set up randomized exposure groups, and model the transmission dynamics.
+
+For a basic SIR model, the basic reproduction number is calculated as:
+$$ R_0=\beta × \text{RP} $$
+where $ \\beta $ is the transmission coefficient and $ \\text{RP} $ is the mean infectious (removal) period.
+
+```{r}
+# 1. Define model parameters
+params <- make_parameters(
+  model_type = "SIR",
+  dataset = "sir_demo",
+  name = "sir_baseline",
+  setup = "single",
+  sim_new_data = "r",
+  group_layout = "random"
+)
+
+# 2. Build the population structures and pedigree
+pedigree <- make_pedigree(params)
+popn <- set_groups(pedigree, params)
+
+# 3. Simulate genetic traits and downstream epidemic transmission
+popn <- set_traits(popn, params)
+epic_popn <- simulate_epidemic(popn, params)
+
+# 4. Extract parameters and plot survival trajectories
+print(get_R0(epic_popn))
+plot_model(epic_popn, params)
+
+```
+
+### 2. Setting Up an SEIDR Model with Multi-Trait Genomic Covariances
+In this scenario, we set up a compartmental model containing latent/exposed ($ E $) and undetectable ($ I $) states alongside a detectable ($ D $) status. We initialise individual genetic effects (IEs) for susceptibility (`s`), infectivity (`i`), and tolerance (`t`), defining custom additive genetic variances and correlations.
+
+The structural genetic relationships are formalised via the genomic covariance matrix `$ \boldsymbol{\Sigma}_{G} $`:
+
+```R
+# 1. Customising genetic variance-covariance matrices
+custom_vars <- list(sus = 1.2, inf = 0.8, tol = 0.5, default = 0.2)
+custom_cors <- list(si = -0.3, st = 0.15, it = 0.25, default = 0.0)
+
+params <- make_parameters(
+  model_type = "SEIDR",
+  dataset = "genetic_seidr",
+  name = "multi_trait_scen",
+  IEs = "sit",               # Susceptibility, Infectivity, Tolerance
+  vars = custom_vars,
+  cors = custom_cors,
+  setup = "large"
+)
+
+# 2. Construct popn with relatedness structures
+pedigree <- make_pedigree(params)
+popn <- set_groups(pedigree, params)
+
+# 3. Sample genetic traits using Cholesky decomposition of the A-matrix
+popn <- set_traits(popn, params)
+```
+
+---
+
+### 3. Incorporating and Recentring Body Weight as a Phenotypic Fixed Effect
+This example shows how to configure fixed environmental effects (such as individual body weight) and apply them to scale individual disease traits log-linearly before running an epidemic.
+
+```R
+# 1. Define fixed effects applying to Susceptibility (s), Infectivity (i), and Tolerance (t)
+fixed_effects <- list(weight = "sit")
+
+params <- make_parameters(
+  model_type = "SEIR",
+  dataset = "covariate_modelling",
+  name = "weight_fe_scen",
+  FEs = fixed_effects,
+  use_weight = "log",
+  setup = "fb_12_rpw"
+)
+
+# 2. Initialise pedigree and assign weights (re-sampled or bespoke)
+popn <- make_pedigree(params)
+popn <- set_groups(popn, params)
+popn <- set_weights(popn, params) # Applies normal/log-normal weight distributions
+
+# 3. Apply the recentred fixed effects to construct final individual phenotypes
+popn <- set_traits(popn, params)
+popn <- set_phenotypes(popn, params)
+```
+
+---
+
+### 4. Simulating Multiple Trials with Nested Trial Structures
+When simulating nested architectures (e.g., matching the biological attributes of the Fishboost dataset), you can segment animals of same-family lineages among multiple separated exposure challenges (e.g., Trial 1 and Trial 2), allowing for different baseline transmission levels.
+
+```R
+# 1. Initialise nested multi-trial layouts
+params <- make_parameters(
+  model_type = "SEIR",
+  setup = "fb_12_rpw", # Splitting across Trial 1 & Trial 2
+  group_layout = "fishboost",
+  sim_new_data = "r"
+)
+
+# 2. Retrieve structured data allocations
+pedigree <- make_pedigree(params)
+popn <- set_groups(pedigree, params)
+
+# 3. Observe the trial divisions assigned to individual groups
+table(popn$trial, popn$group)
+```
+
+---
+
+### 5. Correcting Historical Inoculation Status (Demoting Non-Infective Seeders)
+When evaluating real-world context data (such as challenge schedules), individuals classified as "seeders" ($ donor = 1 $) might fail to show signs of positive infection. This custom handling step cleans the data by demoting unresponsive seeders to contact status ($ donor = 0 $).
+
+```R
+# 1. Load biological challenge data
+raw_popn <- readRDS("fb_data/fb_12.rds")
+
+# 2. Configure filtering rules
+params <- make_parameters(
+  model_type = "SEIDR",
+  setup = "fb_12",
+  sim_new_data = "no" # Use existing database
+)
+params$fix_donors <- c("time", "no_Tsign_survivors")
+params$t_demote <- c(20, 80) # Threshold demotions per trial
+
+# 3. Strip inappropriate donors
+corrected_popn <- fix_fb_data(raw_popn, params)
+```
+
+---
+
+### 6. Exporting High-Performance R Configuration Packages to BICI
+The package natively interfaces with BICI, a C++ command-line application used for heavy computational MCMC and sequence inference. This script demonstrates how to generate the corresponding structured `.bici` package directories files programmatically.
+
+```R
+# 1. Make parameters and build challenge population
+params <- make_parameters(
+  model_type = "SIDR",
+  dataset = "bici_export",
+  name = "hpc_scen_1"
+)
+popn <- make_pedigree(params) |> set_groups(params) |> set_traits(params)
+
+# 2. Generate configuration directories
+# Creates parameters, data matrices, sparse pedigrees and maps
+bici_config_list <- generate_bici_script(popn, params)
+```
+
+---
+
+### 7. Running BICI Bayesian Inference via C++ Execution Calls
+This example sets up MCMC sampling parameters, compiles script configurations, and initiates BICI execution directly from R.
+
+```R
+params <- make_parameters(
+  model_type = "SEIR",
+  dataset = "mcmc_run",
+  name = "inference_test",
+  algorithm = "pas" # Parallel Tempering / Parallel MCMC
+)
+params$nsample <- 1e5
+params$nchains <- 8
+
+# Setup configs and drop ancient configurations
+cleanup_bici_files(params)
+bici_script <- generate_bici_script(popn, params)
+
+# Model execution call to underlying compiled bici software
+cmd <- with(params, str_glue(
+    "mpirun -n {nchains} --oversubscribe ../BICI/bici-Linux {config} {bici_cmd}"
+))
+system(cmd)
+```
+
+---
+
+### 8. Diagnostic Evaluation and Rebuilding BICI Posteriors
+Following BICI model calls, parameters are verified using diagnostic criteria like Effective Sample Size (ESS) and Gelman-Rubin convergence criteria ($ \hat{R} $). 
+
+```R
+# Rebuild diagnostics, calculate HDI bounds and save updated results
+posterior_estimates <- rebuild_bici_posteriors(
+  dataset = "mcmc_run",
+  name = "inference_test"
+)
+
+# Output summary metric lines to screen
+msg_pars(posterior_estimates)
+```
+
+---
+
+### 9. Flattening Posterior Trace Files for Disease Trajectory Reconstruction
+Individual disease progress files (`state_<n>.txt`) represent specific points in time for the disease compartment states. Extracting these trajectories turns file parameters into long-format tidy tables.
+
+```R
+# Flatten state files to compute point estimates of latent compartment times
+etc_results <- flatten_bici_states(
+  dataset = "mcmc_run",
+  name = "inference_test",
+  bici_cmd = "inf"
+)
+
+# Extract unobserved transitions for specific individuals
+individual_transitions <- etc_results$popn[id == 42]
+print(individual_transitions)
+```
+
+---
+
+### 10. Evaluating Posterior Heritability and Genetic Parameters
+This example outlines how to read posterior output trace files, compute realized heritability distributions ($ h^{2} = \sigma^{2}_{g} / (\sigma^{2}_{g} + \sigma^{2}_{e}) $), and plot estimated densities against simulated true parameters.
+
+```R
+# 1. Plot genetic parameter profiles and posterior densities 
+cov_plots <- plot_covariances(
+  dataset = "genetic_seidr",
+  scen = 1,
+  itn = 1,
+  ci = "hpdi" # Highest Posterior Density Interval
+)
+
+# 2. Access specific genetic components of the model plot
+# Displays posterior densities for additive genetic values (G), 
+# environmental residuals (E), and phenotypic distributions (P)
+cowplot::plot_grid(cov_plots$G, cov_plots$H, ncol = 2)
+```

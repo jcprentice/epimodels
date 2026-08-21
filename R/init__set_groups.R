@@ -24,7 +24,7 @@ set_groups <- function(popn, params) {
     }
 
     # Group layout will break if set to fishboost unless the pedigree matches
-    if (group_layout == "fishboost" && !str_starts(setup, "fb")) {
+    if (group_layout == "fishboost" && !stringr::str_starts(setup, "fb")) {
         group_layout <- "random"
     }
 
@@ -32,8 +32,8 @@ set_groups <- function(popn, params) {
     dt <- popn[sdp == "progeny", .(id)]
 
     # Set trial
-    if (str_starts(setup, "fb")) {
-        fb_data <- readRDS(str_glue("fb_data/{setup}.rds"))
+    if (stringr::str_starts(setup, "fb")) {
+        fb_data <- readRDS(stringr::str_glue("fb_data/{setup}.rds"))
         dt[, trial := fb_data[dt$id, trial]]
     } else {
         dt[, trial := 1L]

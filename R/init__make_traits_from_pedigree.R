@@ -1,5 +1,3 @@
-library(MASS)
-
 # This is a faster version using arrays and no loops
 make_traits_from_pedigree <- function(pedigree, params) {
     message("Making trait values from pedigree ...")
@@ -11,7 +9,7 @@ make_traits_from_pedigree <- function(pedigree, params) {
         traitnames   <- model_traits[intersect(str_chars(IEs), names(model_traits))]
         cov_G        <- params$cov_G[traitnames, traitnames]
         cov_E        <- params$cov_E[traitnames, traitnames]
-        n_traits     <- str_length(IEs)
+        n_traits     <- stringr::str_length(IEs)
         use_weight   <- params$use_weight
     }
 
@@ -22,8 +20,8 @@ make_traits_from_pedigree <- function(pedigree, params) {
     # Skip everything if n_traits == 0 (otherwise things break)
     if (n_traits == 0) {
         popn <- copy(pedigree)
-        missing_traits_GV <- str_c(missing_traits, "_g")
-        missing_traits_EV <- str_c(missing_traits, "_e")
+        missing_traits_GV <- stringr::str_c(missing_traits, "_g")
+        missing_traits_EV <- stringr::str_c(missing_traits, "_e")
         # popn[, trial := 1L] # what is this doing here?
         popn[, (missing_traits_GV) := 0]
         popn[, (missing_traits_EV) := 0]
@@ -37,8 +35,8 @@ make_traits_from_pedigree <- function(pedigree, params) {
     ntotal <- nrow(pedigree)
 
     # Create names of trait variants
-    traits_g <- str_c(traitnames, "_g")
-    traits_e <- str_c(traitnames, "_e")
+    traits_g <- stringr::str_c(traitnames, "_g")
+    traits_e <- stringr::str_c(traitnames, "_e")
 
     # Check for positive definite matrix
     if (any(eigen(cov_G)$values < 0)) {
@@ -54,7 +52,7 @@ make_traits_from_pedigree <- function(pedigree, params) {
     }
 
     # Set the genetic values (GVs) for the parents first, and fix names
-    parent_GVs <- mvrnorm(nparents, rep(0, n_traits), cov_G)
+    parent_GVs <- MASS::mvrnorm(nparents, rep(0, n_traits), cov_G)
 
     # Get the parent IDs for the progeny in a convenient form
     sire_dam <- as.matrix(pedigree[, .(sire, dam)])
@@ -68,18 +66,21 @@ make_traits_from_pedigree <- function(pedigree, params) {
     # Correct for missing values in pedigree
     na_sire_ids <- pedigree[sdp == "progeny" & is.na(sire), id - nparents]
     if (length(na_sire_ids) > 0) {
-        sire_vals[na_sire_ids, ] <- mvrnorm(length(na_sire_ids), rep(0, n_traits), cov_G)
+        sire_vals[na_sire_ids, ] <- MASS::mvrnorm(length(na_sire_ids),
+                                                  rep(0, n_traits), cov_G)
     }
 
     na_dam_ids <- pedigree[sdp == "progeny" & is.na(dam), id - nparents]
     if (length(na_dam_ids) > 0) {
-        dam_vals[na_dam_ids, ] <- mvrnorm(length(na_dam_ids), rep(0, n_traits), cov_G)
+        dam_vals[na_dam_ids, ] <- MASS::mvrnorm(length(na_dam_ids),
+                                                rep(0, n_traits), cov_G)
     }
 
     parent_means <- (sire_vals + dam_vals) / 2
 
     # Generate progeny GVs ~ MvNorm(nprogeny, parent_means, cov_G / 2)
-    progeny_GVs <- mvrnorm(nprogeny, rep(0, n_traits), cov_G / 2) + parent_means
+    progeny_GVs <- MASS::mvrnorm(nprogeny, rep(0, n_traits), cov_G / 2) +
+      parent_means
 
     # Old method, may be more brittle depending on cov_G
     # L <- chol(cov_G / 2)
@@ -87,7 +88,7 @@ make_traits_from_pedigree <- function(pedigree, params) {
     # progeny_GVs <- (z %*% L) + parent_means
 
     # Generate environmental values
-    EVs <- mvrnorm(ntotal, rep(0, n_traits), cov_E)
+    EVs <- MASS::mvrnorm(ntotal, rep(0, n_traits), cov_E)
     colnames(EVs) <- traits_e
 
     # Generate log-normally dist'd phenotypes P ~ G + E

@@ -99,7 +99,7 @@ make_parameters <- function(
     # Description
     description <- "Basic test model"
 
-    label <- str_c("s", scenario)
+    label <- stringr::str_c("s", scenario)
 
     # Set output directories ----
 
@@ -110,18 +110,18 @@ make_parameters <- function(
     }
 
     {
-        base_dir    <- c(str_glue("datasets/{dataset}"))
-        gfx_dir     <- c(str_glue("{base_dir}/gfx"))
-        data_dir    <- c(str_glue("{base_dir}/data"))
-        results_dir <- c(str_glue("{base_dir}/results"))
-        meta_dir    <- c(str_glue("{base_dir}/meta"))
-        config      <- c(str_glue("{data_dir}/{name}.bici"))
-        output_dir  <- c(str_glue("{data_dir}/{name}-out"))
-        states_dir  <- c(str_glue("{output_dir}/states"))
+        base_dir    <- c(stringr::str_glue("datasets/{dataset}"))
+        gfx_dir     <- c(stringr::str_glue("{base_dir}/gfx"))
+        data_dir    <- c(stringr::str_glue("{base_dir}/data"))
+        results_dir <- c(stringr::str_glue("{base_dir}/results"))
+        meta_dir    <- c(stringr::str_glue("{base_dir}/meta"))
+        config      <- c(stringr::str_glue("{data_dir}/{name}.bici"))
+        output_dir  <- c(stringr::str_glue("{data_dir}/{name}-out"))
+        states_dir  <- c(stringr::str_glue("{output_dir}/states"))
     }
 
     # Population setup ----
-    message(str_glue("- Setup is: '{setup}'\n",
+    message(stringr::str_glue("- Setup is: '{setup}'\n",
                      "- Group layout is: '{group_layout}'"))
 
     # Note: the FB dataset isn't balanced
@@ -156,7 +156,7 @@ make_parameters <- function(
     }
 
     # Traits ----
-    message(str_glue("- Model type is: '{model_type}'"))
+    message(stringr::str_glue("- Model type is: '{model_type}'"))
 
     # Compartments are just the letters in model_type (ignore repeated S)
     compartments <- uniq_chars(model_type)
@@ -193,21 +193,22 @@ make_parameters <- function(
 
     # Likely using only a subset of traits
     IEs <- if (IEs %in% c("", "none", NA)) {
-        strrep("_", length(model_traits))
+      strrep("_", length(model_traits))
     } else if (IEs == "all") {
-        model_traits |> names() |> str_flatten()
+      model_traits |> names() |> stringr::str_flatten()
     } else {
-        str_to_lower(IEs)
+      stringr::str_to_lower(IEs)
     }
 
     IEs_used <- IEs |> str_chars() |>
-        str_subset("_", negate = TRUE) |> str_flatten()
+      stringr::str_subset("_", negate = TRUE) |> stringr::str_flatten()
 
-    n_traits_used <- str_length(IEs_used)
+    n_traits_used <- stringr::str_length(IEs_used)
     traits_used <- model_traits[str_chars(IEs_used)]
 
     if (n_traits_used > 0) {
-        message("- ", n_traits_used, " genetic traits: ", str_flatten_comma(traits_used))
+        message("- ", n_traits_used, " genetic traits: ",
+                stringr::str_flatten_comma(traits_used))
     } else {
         message("- 0 genetic traits used")
     }
@@ -359,19 +360,20 @@ make_parameters <- function(
     ## Cov priors ----
     t1 <- model_traits |> names()
     xx <- strrep(t1, 2)
-    xy <- expand.grid(t1, t1) |> rev() |> apply(1, str_flatten) |>
+    xy <- expand.grid(t1, t1) |> rev() |> apply(1, stringr::str_flatten) |>
         matrix(nrow = length(t1)) |> pipebind::bind(x, x[lower.tri(x)])
-    cov_p <- c(str_c("cov_G_", xx), str_c("r_G_", xy),
-               str_c("cov_E_", xx), str_c("r_E_", xy))
+    cov_p <- c(stringr::str_c("cov_G_", xx), stringr::str_c("r_G_", xy),
+               stringr::str_c("cov_E_", xx), stringr::str_c("r_E_", xy))
 
     cov_priors <- data.table(parameter = cov_p, true_val = 0,
                              type = "default", val1 = 0, val2 = 4)
-    cov_priors[str_starts(parameter, "r_"),
+    cov_priors[stringr::str_starts(parameter, "r_"),
                `:=`(val1 = -0.9, val2 = 0.9)]
 
     ## FE priors ----
 
-    FE_p <- expand.grid(t1, names(FEs)) |> rev() |> apply(1, str_flatten, "_")
+    FE_p <- expand.grid(t1, names(FEs)) |> rev() |>
+      apply(1, stringr::str_flatten, "_")
     FE_priors <- data.table(parameter = FE_p, true_val = 0,
                             type = "uniform", val1 = -4, val2 = 4)
 
@@ -404,8 +406,8 @@ make_parameters <- function(
     GE_traits <- t1 |>
         intersect(str_chars(IEs_used))
 
-    pwalk(expand.grid(x = t1, y = t1), \(x, y) {
-        priors[str_ends(parameter, str_glue("_[GE]_{x}{y}")),
+    purrr::pwalk(expand.grid(x = t1, y = t1), \(x, y) {
+        priors[stringr::str_ends(parameter, stringr::str_glue("_[GE]_{x}{y}")),
                use := all(c(x, y) %in% GE_traits)]
     })
 
@@ -520,11 +522,11 @@ summarise_params <- function(params) {
         } else if (sim_new_data == "summary_ps") {
             message("Using data simulated in BICI from posterior")
         } else {
-            message(str_glue("Simulating new {model_type} data via {x}",
-                             x = str_to_upper(sim_new_data)))
+            message(stringr::str_glue("Simulating new {model_type} data via {x}",
+                             x = stringr::str_to_upper(sim_new_data)))
         }
 
-        message(str_glue(
+        message(stringr::str_glue(
             "- Demography is:",
             "\t{nsires} sires, {ndams} dams, {nprogeny} progeny ({ntotal} total)",
             "\t{ngroups} group{s} (group size {group_size})",
@@ -532,10 +534,10 @@ summarise_params <- function(params) {
             .trim = FALSE, .sep = "\n"
         ))
 
-        message(str_glue(
+        message(stringr::str_glue(
             "- Individual Effects on:",
-            str_c("\t", if (IEs %in% c("", "none")) "none" else
-                str_flatten_comma(model_traits[str_chars(IEs)])),
+            stringr::str_c("\t", if (IEs %in% c("", "none")) "none" else
+                stringr::str_flatten_comma(model_traits[str_chars(IEs)])),
             .trim = FALSE, .sep = "\n"
         ))
 
@@ -545,13 +547,13 @@ summarise_params <- function(params) {
         message("- Fixed Effects are:")
 
 
-        message(str_glue(
+        message(stringr::str_glue(
             "- Fixed Effects are:",
-            str_c(names(FEs), " = '", FEs, "'") |> str_flatten_comma(),
-            .trim = FALSE, .sep = "\n"
+            stringr::str_c(names(FEs), " = '", FEs, "'") |>
+              stringr::str_flatten_comma(),.trim = FALSE, .sep = "\n"
         ))
 
-        message(str_glue(
+        message(stringr::str_glue(
             "- Estimated R0:",
             "\t{r0}",
             r0 = signif(R0, 3),
@@ -559,14 +561,14 @@ summarise_params <- function(params) {
         ))
 
         if (patch_dataset != "") {
-            message(str_glue(
+            message(stringr::str_glue(
                 "- Patching with dataset {patch_dataset} / {patch_name}",
                 "\ttype = {patch_type}, state = {patch_state}",
                 .trim = FALSE, .sep = "\n"
             ))
         }
 
-        message(str_glue(
+        message(stringr::str_glue(
             "- Running MCMC with:",
             "\t{ns} updates, {th} samples, {burnprop} burnin, {nchains} chains",
             "- BICI script file:",

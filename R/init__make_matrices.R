@@ -61,7 +61,8 @@ make_matrices <- function(model_traits,
     }
 
     # Finally fill in named values for cors
-    mat <- expand.grid(traits1, traits1) |> rev() |> apply(1, str_flatten) |> matrix(N, N)
+    mat <- expand.grid(traits1, traits1) |> rev() |>
+      apply(1, stringr::str_flatten) |> matrix(N, N)
     ij <- matrix(1:N^2, N, N)[lower.tri(mat)]
     cor_names <- mat[ij]
 
@@ -97,9 +98,9 @@ make_matrices_from_priors <- function(priors) {
 
     xx <- c("ss", "ii", "ll", "dd", "tt")
     xy <- c("si", "sl", "sd", "st", "il", "id", "it", "ld", "lt", "dt")
-    covs <- c(str_c("cov_G_", xx), str_c("r_G_", xy),
-              str_c("cov_E_", xx), str_c("r_E_", xy))
-    walk(covs, \(i) priors[[i]] <<- priors[[i]] %||% 0)
+    covs <- c(stringr::str_c("cov_G_", xx), stringr::str_c("r_G_", xy),
+              stringr::str_c("cov_E_", xx), stringr::str_c("r_E_", xy))
+    purrr::walk(covs, \(i) priors[[i]] <<- priors[[i]] %||% 0)
 
     Sigma_G <- with(priors, matrix(
         c(cov_G_ss, r_G_si,   r_G_sl,   r_G_sd,   r_G_st,
