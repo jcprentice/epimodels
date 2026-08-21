@@ -3,11 +3,11 @@ first <- function(x, n = 1) x[seq(1, min(n, length(x)))]
 last <- function(x, n = 1) x[seq(max(length(x) - n + 1, 1), length(x))]
 
 # We often just want the first or last letter of a string
-str_1st <- function(x) str_sub(x, 1L, 1L)
-str_last <- function(x) str_sub(x, -1L)
+str_1st <- function(x) stringr::str_sub(x, 1L, 1L)
+str_last <- function(x) stringr::str_sub(x, -1L)
 
 # split a string into individual characters
-str_chars <- function(x) str_split_1(x, "")
+str_chars <- function(x) stringr::str_split_1(x, "")
 
 # Write sparse matrix so that SIRE can read it
 write_sparse_matrix <- function(M, file) {
@@ -35,16 +35,16 @@ write_dt_as_sparse <- function(dt, file) {
 table_to_tsv_string <- function(x, row_names = FALSE, col_names = FALSE,
                                 quote = FALSE) {
     x |>
-        write.table(row.names = row_names, col.names = col_names,
-                    quote = quote, sep = "\t", eol = "\n") |>
-        capture.output() |>
-        str_flatten("\n") |>
-        {\(x) str_c("\n", x, "\n")}()
+    write.table(row.names = row_names, col.names = col_names,
+                quote = quote, sep = "\t", eol = "\n") |>
+
+    capture.output() |> stringr::str_flatten("\n") |>
+    {\(x) stringr::str_c("\n", x, "\n")}()
 }
 
 # message a list
 capture_message <- function(x) {
-    x |> print() |> capture.output() |> str_flatten("\n") |> message()
+    x |> print() |> capture.output() |> stringr::str_flatten("\n") |> message()
 }
 
 
@@ -109,10 +109,10 @@ msg_pars <- function(x) {
               convergence)] |>
         as.data.frame() |>
         capture.output() |>
-        str_flatten("\n") |>
+      stringr::str_flatten("\n") |>
         message()
 
-    message(str_glue("min ESS = {ess}, max GR = {gr}",
+    message(stringr::str_glue("min ESS = {ess}, max GR = {gr}",
                      ess = x$ESS |> min(),
                      gr  = x$GR  |> max() |> round(2)))
 }
@@ -138,17 +138,17 @@ log_recentre <- function(x, digits = -1L) {
 # Get part of description (used in param_generators)
 get_part <- function(x, y) {
     x |>
-        str_squish() |>
-        str_split_1(", ") |>
-        str_subset(y) |>
-        str_split_i(" ", 2)
+    stringr::str_squish() |>
+    stringr::str_split_1(", ") |>
+    stringr::str_subset(y) |>
+    stringr::str_split_i(" ", 2)
 }
 
 get_lpart <- function(x, y) {
     x |>
-        str_squish() |>
-        str_split_1(", ") |>
-        str_subset(y) |>
-        str_split_i(" ", 2) |>
-        str_to_lower()
+    stringr::str_squish() |>
+    stringr::str_split_1(", ") |>
+    stringr::str_subset(y) |>
+    stringr::str_split_i(" ", 2) |>
+    stringr::str_to_lower()
 }
